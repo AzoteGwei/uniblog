@@ -1,5 +1,5 @@
 import mdx from '@astrojs/mdx';
-import { rehypeHeadingIds, unified } from '@astrojs/markdown-remark';
+import { rehypeHeadingIds, unified, type RehypePlugins } from '@astrojs/markdown-remark';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -12,11 +12,11 @@ import remarkShortcodes from './src/plugins/remark-shortcodes';
 const site = loadSiteConfig();
 
 const remarkPlugins = [remarkDirective, remarkShortcodes];
-const rehypePlugins = [
+const rehypePlugins: RehypePlugins = [
   rehypeHeadingIds,
   [rehypeAutolinkHeadings, { behavior: 'append', properties: { className: ['anchor'], ariaHidden: true, tabIndex: -1 }, content: { type: 'text', value: '#' } }],
   rehypeHeadingIndex,
-] as const;
+];
 
 export default defineConfig({
   site: site.url,
@@ -33,7 +33,7 @@ export default defineConfig({
     }),
   ],
   markdown: {
-    processor: unified({ remarkPlugins, rehypePlugins: [...rehypePlugins], smartypants: false }),
+    processor: unified({ remarkPlugins, rehypePlugins, smartypants: false }),
     shikiConfig: {
       themes: { light: 'github-light', dark: 'github-dark' },
       defaultColor: false,

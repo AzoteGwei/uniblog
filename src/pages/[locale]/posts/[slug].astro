@@ -1,10 +1,10 @@
 ---
 import Article from '../../../layouts/Article.astro';
-import { cfg, LOCALES, postsIn, slugOf } from '../../../lib/content';
+import { cfg, LOCALES, postsIn, slugOf, type Post } from '../../../lib/content';
 import { localePath } from '../../../lib/locales';
 
 export async function getStaticPaths() {
-  const paths = [];
+  const paths: { params: { locale: string; slug: string }; props: { entry: Post; prev?: Post; next?: Post } }[] = [];
   for (const locale of LOCALES) {
     const posts = await postsIn(locale);
     posts.forEach((entry, i) =>

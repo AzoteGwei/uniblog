@@ -83,3 +83,10 @@ describe('materialize', () => {
     expect(rep.removed).toEqual([]);
   });
 });
+
+describe('front matter validation', () => {
+  it('reports the file and field', () => {
+    const root = makeSite({ 'content/posts/bad/index.md': '---\ntitle: x\n---\n\nbody\n' });
+    expect(() => materialize(cfg, root)).toThrow(/bad\/index\.md: invalid front matter — date/);
+  });
+});

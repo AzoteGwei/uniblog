@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
 import type { SiteConfig } from './config';
-import { splitFrontmatter, TEXT_FIELDS } from './frontmatter';
+import { sourceFrontmatter, splitFrontmatter, TEXT_FIELDS } from './frontmatter';
 import { hashOf } from './glossary';
 import { isZh, resolveLocale } from './locales';
 
@@ -78,12 +78,12 @@ export function discoverSources(cfg: SiteConfig, root = process.cwd()): SourceIt
           } else if (!f.startsWith('.')) assets.push(join(full, f));
         }
         if (!primary) continue;
-        const doc = readDoc(primary);
+        const doc = checkSource(readDoc(primary));
         items.push({ collection, key: name, dir: full, lang: langOf(cfg, doc), primary: doc, humans, assets });
       } else {
         const p = parseName(cfg, name);
         if (!p) continue;
-        const e = singles.get(p.base) ?? { humans: new Map() };
+        const e = singles.get(p.base) ?? { humans: new Map<string, string>() };
         if (p.locale) e.humans.set(p.locale, full);
         else e.primary = full;
         singles.set(p.base, e);
@@ -91,12 +91,22 @@ export function discoverSources(cfg: SiteConfig, root = process.cwd()): SourceIt
     }
     for (const [key, e] of singles) {
       if (!e.primary) continue;
-      const doc = readDoc(e.primary);
+      const doc = checkSource(readDoc(e.primary));
       const humans = new Map([...e.humans].map(([l, f]) => [l, readDoc(f)]));
       items.push({ collection, key, lang: langOf(cfg, doc), primary: doc, humans, assets: [] });
     }
   }
   return items;
+}
+
+/** Validate a primary (source) document's front matter; throws with the file path. */
+function checkSource(doc: Doc): Doc {
+  const r = sourceFrontmatter.safeParse(doc.data);
+  if (!r.success) {
+    const issues = r.error.issues.map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`).join('; ');
+    throw new Error(`${doc.file}: invalid front matter — ${issues}`);
+  }
+  return doc;
 }
 
 function langOf(cfg: SiteConfig, doc: Doc): string {

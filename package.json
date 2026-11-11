@@ -52,10 +52,11 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.6.6",
     "@types/unist": "^3.0.3",
+    "mdast-util-to-hast": "^13.2.1",
     "pagefind": "^1.6.0",
     "playwright-core": "^1.65.0",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "vfile": "^6.0.3",
     "vitest": "^5.1.0",
     "wrangler": "^4.159.0"

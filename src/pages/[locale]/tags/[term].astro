@@ -1,10 +1,10 @@
 ---
 import Taxonomy from '../../../components/Taxonomy.astro';
-import { cfg, LOCALES, postsIn } from '../../../lib/content';
+import { cfg, LOCALES, postsIn, type Post } from '../../../lib/content';
 import { localePath } from '../../../lib/locales';
 
 export async function getStaticPaths() {
-  const paths = [];
+  const paths: { params: { locale: string; term: string }; props: { locale: string; posts: Post[] } }[] = [];
   for (const locale of LOCALES) {
     const posts = await postsIn(locale);
     const terms = new Set(posts.flatMap((p) => p.data.tags));

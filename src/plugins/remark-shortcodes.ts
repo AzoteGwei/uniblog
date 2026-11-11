@@ -9,6 +9,7 @@
  *   ::youtube{id="…"}
  */
 import type { Paragraph, PhrasingContent, Root, RootContent } from 'mdast';
+import type {} from 'mdast-util-to-hast';
 import type { ContainerDirective, LeafDirective, TextDirective } from 'mdast-util-directive';
 import { visit } from 'unist-util-visit';
 import type { VFile } from 'vfile';
@@ -25,8 +26,8 @@ function localeOf(file: VFile): string {
   return hit ? hit[0] : cfg.defaultLocale;
 }
 
-function setH(node: { data?: Record<string, unknown> }, hName: string, hProperties: Record<string, unknown> = {}) {
-  node.data = { ...(node.data ?? {}), hName, hProperties };
+function setH(node: { data?: object }, hName: string, hProperties: Record<string, unknown> = {}) {
+  node.data = { ...(node.data ?? {}), hName, hProperties } as object;
 }
 
 /** Container directives keep their `[label]` as a first paragraph flagged with directiveLabel. */
@@ -86,7 +87,7 @@ export default function remarkShortcodes() {
             children: [],
             data: { hName: 'input', hProperties: { type: 'radio', name: group, id, checked: i === 0, className: ['tab-radio'] } },
           } as Paragraph);
-          out.push({ type: 'paragraph', children: label, data: { hName: 'label', hProperties: { htmlFor: id, className: ['tab-label'] } } });
+          out.push({ type: 'paragraph', children: label, data: { hName: 'label', hProperties: { htmlFor: [id], className: ['tab-label'] } } });
           setH(p, 'div', { className: ['tab-panel'] });
           out.push(p);
         });

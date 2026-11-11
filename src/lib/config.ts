@@ -28,7 +28,7 @@ export const siteSchema = z
     title: localized,
     description: localized.default({}),
     author: z.string(),
-    url: z.string().url(),
+    url: z.url(),
     defaultLocale: z.string(),
     locales: z.record(z.string(), localeSchema),
     translate: z
@@ -49,7 +49,7 @@ export const siteSchema = z
       .object({ provider: z.literal('cloudflare-pages'), project: z.string() })
       .optional(),
     contentLicense: z
-      .object({ name: z.string(), url: z.string().url() })
+      .object({ name: z.string(), url: z.url() })
       .default({ name: 'CC BY 4.0', url: 'https://creativecommons.org/licenses/by/4.0/' }),
   })
   .superRefine((cfg, ctx) => {

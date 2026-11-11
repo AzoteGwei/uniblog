@@ -119,7 +119,7 @@ export function resolveItem(ctx: Ctx, item: SourceItem): Resolved[] {
   return out;
 }
 
-function render(ctx: Ctx, item: SourceItem, r: Resolved): string {
+function render(item: SourceItem, r: Resolved): string {
   const data = {
     ...r.doc.data,
     lang: undefined,
@@ -189,7 +189,7 @@ export function materialize(cfg: SiteConfig, root = process.cwd()): MaterializeR
       const dir = join(outRoot, localePath(cfg, r.locale), item.collection, item.key);
       const file = join(dir, 'index' + r.doc.ext);
       keep.add(file);
-      if (writeIfChanged(file, render(ctx, item, r))) written.push(relative(root, file));
+      if (writeIfChanged(file, render(item, r))) written.push(relative(root, file));
       for (const a of item.assets) {
         const dest = join(dir, basename(a));
         keep.add(dest);

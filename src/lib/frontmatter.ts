@@ -19,7 +19,7 @@ export function joinFrontmatter(data: Record<string, unknown>, body: string): st
 export const TEXT_FIELDS = ['title', 'description', 'summary'] as const;
 
 export const sourceFrontmatter = z
-  .object({
+  .looseObject({
     title: z.string(),
     date: z.coerce.date(),
     lastmod: z.coerce.date().optional(),
@@ -34,7 +34,6 @@ export const sourceFrontmatter = z
     translate: z.union([z.boolean(), z.array(z.string())]).default(true),
     glossary: z.array(z.record(z.string(), z.union([z.string(), z.boolean()]))).optional(),
     reviewed: z.boolean().optional(),
-  })
-  .passthrough();
+  });
 
 export type SourceFrontmatter = z.infer<typeof sourceFrontmatter>;
