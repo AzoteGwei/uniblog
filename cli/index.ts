@@ -4,6 +4,7 @@ import { loadSiteConfig } from '../src/lib/config';
 import { materialize } from '../src/lib/materialize';
 import { existsSync } from 'node:fs';
 import { createPost } from './new';
+import { runBin } from './run';
 import { planJobs, runJobs } from './translate';
 import { resolveLocale } from '../src/lib/locales';
 import { statusTable } from './status';
@@ -82,6 +83,43 @@ async function main(): Promise<number> {
       materialize(cfg);
       if (res.failed.length) console.error(`${res.failed.length} job(s) failed`);
       return res.failed.length ? 1 : 0;
+    }
+    case 'dev': {
+      const t = statusTable(materialize(cfg), Object.keys(cfg.locales));
+      const pending = planJobs(cfg, process.cwd());
+      if (pending.jobs.length || t.stale)
+        console.log(`\n${pending.jobs.length} translation(s) missing or stale — run \`pnpm i18n\` or use the dev toolbar.\n`);
+      return runBin('astro', ['dev', ...rest]);
+    }
+    case 'build':
+    case 'ship': {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          strict: { type: 'boolean' },
+          'no-translate': { type: 'boolean' },
+          provider: { type: 'string', short: 'p' },
+        },
+      });
+      if (!values['no-translate'] && cfg.translate.onBuild === 'stale') {
+        const { jobs } = planJobs(cfg, process.cwd());
+        if (jobs.length) {
+          console.log(`translating ${jobs.length} missing/stale item(s) before build…`);
+          const res = await runJobs(cfg, process.cwd(), jobs, { provider: values.provider, log: (m) => console.log(m) });
+          if (res.failed.length) console.warn(`! ${res.failed.length} translation(s) failed; those pages fall back to the source text.`);
+        }
+      }
+      const t = statusTable(materialize(cfg), Object.keys(cfg.locales));
+      if (values.strict && (t.stale || t.fallback)) {
+        console.log(t.text);
+        console.error(`--strict: ${t.stale} stale and ${t.fallback} fallback page(s)`);
+        return 1;
+      }
+      let code = await runBin('astro', ['build']);
+      if (code === 0) code = await runBin('pagefind', ['--site', 'dist']);
+      if (code !== 0 || cmd === 'build') return code;
+      if (!cfg.deploy) throw new Error('site.yaml has no deploy section');
+      return runBin('wrangler', ['pages', 'deploy', 'dist', '--project-name', cfg.deploy.project, '--commit-dirty=true']);
     }
     default:
       console.log('uniblog <new|materialize|status|i18n|dev|build|ship>');

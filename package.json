@@ -9,11 +9,16 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "uniblog": "tsx cli/index.ts",
+    "dev": "tsx cli/index.ts dev",
+    "build": "tsx cli/index.ts build",
+    "ship": "tsx cli/index.ts ship",
+    "preview": "astro preview",
     "new": "tsx cli/index.ts new",
     "i18n": "tsx cli/index.ts i18n",
     "i18n:status": "tsx cli/index.ts status",
+    "uniblog": "tsx cli/index.ts",
     "astro": "astro",
+    "check": "astro check && tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
@@ -45,9 +50,11 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.6.6",
     "@types/unist": "^3.0.3",
+    "pagefind": "^1.6.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vfile": "^6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "wrangler": "^4.159.0"
   }
 }
