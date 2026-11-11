@@ -50,6 +50,6 @@ npm i astro
 
 ## 图片
 
-::figure{src="./cover.png" alt="封面" caption="页面包里的图片"}
+::figure[页面包里的图片]{src="./cover.png"}
 
 ![Markdown 图片](./cover.png)

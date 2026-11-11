@@ -5,7 +5,7 @@
  *   :::details[Summary]
  *   ::::tabs  +  :::tab[Label]   (outer fence needs more colons)
  *   :::steps
- *   ::figure{src="./a.png" alt="…" caption="…"}
+ *   ::figure[Caption (translated)]{src="./a.png" alt="…"}
  *   ::youtube{id="…"}
  */
 import type { Paragraph, PhrasingContent, Root, RootContent } from 'mdast';
@@ -95,12 +95,13 @@ export default function remarkShortcodes() {
         return;
       }
       if (d.type === 'leafDirective' && d.name === 'figure' && attrs.src) {
-        const caption = attrs.caption;
-        const fig = d as unknown as { type: string; children: unknown[]; data?: Record<string, unknown> };
+        const fig = d as unknown as { type: string; children: PhrasingContent[]; data?: Record<string, unknown> };
+        const label = fig.children.length ? fig.children : attrs.caption ? [{ type: 'text', value: attrs.caption } as PhrasingContent] : [];
+        const alt = attrs.alt ?? label.map((c) => ('value' in c ? c.value : '')).join('');
         fig.children = [
-          { type: 'image', url: attrs.src, alt: attrs.alt ?? caption ?? '', title: null },
-          ...(caption ? [{ type: 'paragraph', children: [{ type: 'text', value: caption }], data: { hName: 'figcaption' } }] : []),
-        ];
+          { type: 'image', url: attrs.src, alt, title: null },
+          ...(label.length ? [{ type: 'paragraph', children: label, data: { hName: 'figcaption' } }] : []),
+        ] as unknown as PhrasingContent[];
         setH(fig, 'figure');
         return;
       }
