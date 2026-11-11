@@ -1,0 +1,137 @@
+---
+import { cfg, type Peer } from '../lib/content';
+import { t } from '../lib/ui';
+
+interface Props {
+  locale: string;
+  peers: Peer[];
+}
+const { locale, peers } = Astro.props;
+const others = peers.filter((p) => p.locale !== locale && p.status !== 'fallback');
+const label = (c: string) => cfg.locales[c]?.label ?? c;
+---
+{cfg.theme.compare && others.length > 0 && (
+  <div class="compare-bar ui" data-pagefind-ignore data-open={t(locale, 'compare.open')} data-close={t(locale, 'compare.close')}>
+    <button type="button" class="compare-toggle" aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 4h8v16H3V4Zm2 2v12h4V6H5Zm8-2h8v16h-8V4Zm2 2v12h4V6h-4Z"/></svg>
+      <span>{t(locale, 'compare.open')}</span>
+    </button>
+    <label>
+      <span class="sr-only">{t(locale, 'compare.with')}</span>
+      <select class="compare-with">
+        {others.map((p) => <option value={p.url} data-locale={p.locale}>{label(p.locale)}</option>)}
+      </select>
+    </label>
+  </div>
+)}
+
+<script>
+  const bar = document.querySelector<HTMLElement>('.compare-bar');
+  if (bar) {
+    const btn = bar.querySelector<HTMLButtonElement>('.compare-toggle')!;
+    const select = bar.querySelector<HTMLSelectElement>('.compare-with')!;
+    const article = document.querySelector<HTMLElement>('article[data-key]')!;
+    const prose = article.querySelector<HTMLElement>('.prose')!;
+    const original = prose.innerHTML;
+    const cache = new Map<string, string>();
+    let on = false;
+
+    const sections = (root: HTMLElement): HTMLElement[][] => {
+      const out: HTMLElement[][] = [[]];
+      for (const el of Array.from(root.children) as HTMLElement[]) {
+        if (el.dataset.hidx !== undefined) out.push([]);
+        out.at(-1)!.push(el);
+      }
+      return out;
+    };
+
+    async function fetchProse(url: string): Promise<string> {
+      if (!cache.has(url)) {
+        const html = await (await fetch(url)).text();
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        cache.set(url, doc.querySelector('article[data-key] .prose')?.innerHTML ?? '');
+      }
+      return cache.get(url)!;
+    }
+
+    async function show() {
+      const opt = select.selectedOptions[0]!;
+      const otherHtml = await fetchProse(opt.value);
+      const left = document.createElement('div');
+      left.innerHTML = original;
+      const right = document.createElement('div');
+      right.innerHTML = otherHtml;
+      const a = sections(left);
+      const b = sections(right);
+      const grid = document.createElement('div');
+      grid.className = 'duo';
+      grid.dataset.pane = 'left';
+      const lang = opt.dataset.locale!;
+      const pane = (els: HTMLElement[], side: string, l?: string) => {
+        const d = document.createElement('div');
+        d.className = `pane pane-${side}`;
+        if (l) d.lang = l;
+        d.append(...els);
+        return d;
+      };
+      if (a.length === b.length) {
+        a.forEach((sec, i) => grid.append(pane(sec, 'left'), pane(b[i]!, 'right', lang)));
+      } else {
+        grid.append(pane(a.flat(), 'left'), pane(b.flat(), 'right', lang));
+      }
+      const tabs = document.createElement('div');
+      tabs.className = 'duo-tabs';
+      tabs.innerHTML = `<button type="button" data-side="left" aria-pressed="true">${document.documentElement.lang}</button><button type="button" data-side="right" aria-pressed="false">${lang}</button>`;
+      tabs.addEventListener('click', (e) => {
+        const side = (e.target as HTMLElement).closest<HTMLElement>('[data-side]')?.dataset.side;
+        if (!side) return;
+        grid.dataset.pane = side;
+        tabs.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.side === side)));
+      });
+      prose.replaceChildren(tabs, grid);
+    }
+
+    async function toggle(next = !on) {
+      on = next;
+      btn.setAttribute('aria-pressed', String(on));
+      btn.querySelector('span')!.textContent = on ? bar!.dataset.close! : bar!.dataset.open!;
+      document.body.classList.toggle('comparing', on);
+      if (on) await show();
+      else prose.innerHTML = original;
+    }
+
+    btn.addEventListener('click', () => toggle());
+    select.addEventListener('change', () => on && show());
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && on && !document.querySelector('dialog[open]')) toggle(false);
+    });
+  }
+</script>
+
+<style>
+  .compare-bar { display: flex; gap: 0.5rem; align-items: center; margin: -0.75rem 0 1.5rem; font-size: 0.85rem; }
+  .compare-bar button, .compare-bar select {
+    display: inline-flex; align-items: center; gap: 0.35rem; height: 1.9rem; padding: 0 0.6rem;
+    font: inherit; color: var(--fg-muted); background: var(--bg-elev);
+    border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+  }
+  .compare-bar button[aria-pressed='true'] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+  :global(body.comparing .layout) { grid-template-columns: minmax(0, 1fr) !important; max-width: 96rem !important; }
+  :global(body.comparing .rail) { display: none; }
+  :global(body.comparing .article) { max-width: none; }
+  :global(body.comparing .prose) { max-width: none; }
+  :global(.duo) { display: grid; grid-template-columns: 1fr 1fr; column-gap: 3rem; }
+  :global(.duo .pane) { min-width: 0; }
+  :global(.duo .pane-right) { border-left: 1px dashed var(--border); padding-left: 1.5rem; margin-left: -1.5rem; }
+  :global(.duo .pane > :first-child) { margin-top: 0.4em; }
+  :global(.duo-tabs) { display: none; gap: 0.4rem; margin-bottom: 1rem; }
+  :global(.duo-tabs button) { font: 0.85rem var(--font-ui); padding: 0.25rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--fg-muted); cursor: pointer; }
+  :global(.duo-tabs button[aria-pressed='true']) { color: var(--accent); border-color: var(--accent); }
+  @media (max-width: 900px) {
+    :global(.duo) { grid-template-columns: 1fr; }
+    :global(.duo-tabs) { display: flex; }
+    :global(.duo[data-pane='left'] .pane-right), :global(.duo[data-pane='right'] .pane-left) { display: none; }
+    :global(.duo .pane-right) { border: 0; padding: 0; margin: 0; }
+  }
+</style>
