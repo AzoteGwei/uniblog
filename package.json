@@ -9,6 +9,9 @@
     "node": ">=22.12.0"
   },
   "scripts": {
+    "uniblog": "tsx cli/index.ts",
+    "new": "tsx cli/index.ts new",
+    "i18n:status": "tsx cli/index.ts status",
     "astro": "astro",
     "test": "vitest run"
   },
