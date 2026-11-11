@@ -1,0 +1,16 @@
+version = 1
+
+# Code: MIT (see LICENSE). Content and translations: CC-BY-4.0 (see content/LICENSE).
+# When several annotations match a path, the last one wins.
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Azote"
+SPDX-License-Identifier = "MIT"
+
+[[annotations]]
+path = ["content/**", "i18n/translations/**", "i18n/glossary.yaml", "i18n/taxonomy.yaml"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Azote"
+SPDX-License-Identifier = "CC-BY-4.0"
