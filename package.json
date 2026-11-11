@@ -1,0 +1,24 @@
+{
+  "name": "uniblog",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@12.16.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "astro": "astro",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "astro": "^7.4.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
