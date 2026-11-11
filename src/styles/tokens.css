@@ -1,0 +1,82 @@
+/* Design tokens. Style (`data-style`) and colour scheme (`data-theme`) are independent:
+   each style declares colours with light-dark(), and data-theme only sets color-scheme. */
+:root {
+  color-scheme: light dark;
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'PingFang SC', 'Hiragino Sans', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif;
+  --font-serif: 'Source Serif 4 Variable', 'Noto Serif CJK SC', 'Source Han Serif SC', 'Songti SC', 'Hiragino Mincho ProN', serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --measure: 72ch;
+  --radius: 6px;
+  --header-h: 3.5rem;
+  --space: 1rem;
+}
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* Paper — warm, reading-focused (default). */
+:root,
+:root[data-style='paper'] {
+  --bg: light-dark(#faf7f0, #1b1916);
+  --bg-elev: light-dark(#fffdf8, #24211d);
+  --bg-sunk: light-dark(#f2ede2, #15130f);
+  --fg: light-dark(#2b2620, #e9e2d4);
+  --fg-muted: light-dark(#6e655a, #a59c8d);
+  --border: light-dark(#e4dccb, #39342c);
+  --accent: light-dark(#a94f26, #e39566);
+  --accent-soft: light-dark(#f4e3d6, #3a2a20);
+  --mark: light-dark(#fbe7a1, #5a4a1c);
+  --font-body: var(--font-serif);
+  --font-heading: var(--font-serif);
+  --font-ui: var(--font-sans);
+}
+
+/* Slate — cool, neutral, sans. */
+:root[data-style='slate'] {
+  --bg: light-dark(#f8fafc, #0f172a);
+  --bg-elev: light-dark(#ffffff, #162036);
+  --bg-sunk: light-dark(#eef2f7, #0b1222);
+  --fg: light-dark(#1e293b, #e2e8f0);
+  --fg-muted: light-dark(#5b6b80, #94a3b8);
+  --border: light-dark(#dde3ec, #26324a);
+  --accent: light-dark(#2563eb, #7aa7ff);
+  --accent-soft: light-dark(#e3ecff, #1c2b4d);
+  --mark: light-dark(#fff3a3, #4b4520);
+  --font-body: var(--font-sans);
+  --font-heading: var(--font-sans);
+  --font-ui: var(--font-sans);
+}
+
+/* Ink — monochrome, high contrast. */
+:root[data-style='ink'] {
+  --bg: light-dark(#ffffff, #000000);
+  --bg-elev: light-dark(#ffffff, #0a0a0a);
+  --bg-sunk: light-dark(#f3f3f3, #141414);
+  --fg: light-dark(#0a0a0a, #f5f5f5);
+  --fg-muted: light-dark(#4a4a4a, #b5b5b5);
+  --border: light-dark(#0a0a0a, #f5f5f5);
+  --accent: light-dark(#0a0a0a, #ffffff);
+  --accent-soft: light-dark(#ececec, #222222);
+  --mark: light-dark(#e5e5e5, #333333);
+  --font-body: var(--font-serif);
+  --font-heading: var(--font-sans);
+  --font-ui: var(--font-sans);
+  --radius: 0;
+}
+
+/* Terminal — monospace everything. */
+:root[data-style='terminal'] {
+  --bg: light-dark(#f7f6ee, #0d110d);
+  --bg-elev: light-dark(#fcfbf5, #121812);
+  --bg-sunk: light-dark(#eceadc, #090c09);
+  --fg: light-dark(#1f2a1f, #c9e4c5);
+  --fg-muted: light-dark(#5d6b5a, #7f9b7b);
+  --border: light-dark(#cfd3bf, #263326);
+  --accent: light-dark(#2e7d32, #7ee787);
+  --accent-soft: light-dark(#dcefd9, #173019);
+  --mark: light-dark(#e8f5a8, #36421a);
+  --font-body: var(--font-mono);
+  --font-heading: var(--font-mono);
+  --font-ui: var(--font-mono);
+  --measure: 80ch;
+  --radius: 2px;
+}
