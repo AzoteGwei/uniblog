@@ -4,11 +4,15 @@ import { fileURLToPath } from 'node:url';
 import type { AstroIntegration } from 'astro';
 import { loadSiteConfig, type SiteConfig } from '../lib/config';
 import { localePath } from '../lib/locales';
-import { materialize, type MaterializeReport } from '../lib/materialize';
+import { materialize, type MaterializeReport, type Resolved } from '../lib/materialize';
+import type { SourceItem } from '../lib/sources';
+import { planJobs, runJobs } from '../../cli/translate/index';
 
 let fallbackUrls = new Set<string>();
 /** URL dir (e.g. `/ja/posts/foo/`) → bundle asset absolute paths. */
 let assetDirs = new Map<string, string[]>();
+/** URL → materialized entry, for the dev toolbar. */
+let pages = new Map<string, { item: SourceItem; resolved: Resolved }>();
 
 function routeOf(cfg: SiteConfig, locale: string, collection: string, slug: string): string {
   const base = `/${localePath(cfg, locale)}/`;
@@ -18,10 +22,12 @@ function routeOf(cfg: SiteConfig, locale: string, collection: string, slug: stri
 function index(cfg: SiteConfig, rep: MaterializeReport): void {
   fallbackUrls = new Set();
   assetDirs = new Map();
+  pages = new Map();
   for (const { item, resolved } of rep.items) {
     for (const r of resolved) {
       const slug = typeof r.doc.data.slug === 'string' ? r.doc.data.slug : item.key;
       const url = routeOf(cfg, r.locale, item.collection, slug);
+      pages.set(url, { item, resolved: r });
       if (r.status === 'fallback') fallbackUrls.add(url);
       if (item.assets.length) assetDirs.set(url, item.assets);
     }
@@ -58,7 +64,13 @@ export default function uniblog(): AstroIntegration {
   return {
     name: 'uniblog',
     hooks: {
-      'astro:config:setup': ({ logger }) => {
+      'astro:config:setup': ({ logger, addDevToolbarApp }) => {
+        addDevToolbarApp({
+          id: 'uniblog-i18n',
+          name: 'Translations',
+          icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12.9 15.1 10.4 12.6l.1-.1A17 17 0 0 0 14.1 6H17V4h-7V2H8v2H1v2h11.2A15.7 15.7 0 0 1 9 11.3 15.6 15.6 0 0 1 6.7 8h-2a17.6 17.6 0 0 0 3 4.6l-5.1 5L4 19l5-5 3.1 3.1.8-2Zm5.6-5.1h-2L12 22h2l1.1-3h4.8l1.1 3h2l-4.5-12Zm-2.6 7 1.6-4.3 1.6 4.3h-3.2Z"/></svg>',
+          entrypoint: new URL('./toolbar-app.ts', import.meta.url),
+        });
         const rep = run();
         logger.info(`materialized ${rep.items.length} items (${rep.written.length} written)`);
       },
@@ -82,6 +94,57 @@ export default function uniblog(): AstroIntegration {
         server.watcher.on('add', onChange);
         server.watcher.on('change', onChange);
         server.watcher.on('unlink', onChange);
+        // Connect appends middlewares after Astro's router; move ours to the front.
+        const front = () => {
+          const stack = server.middlewares.stack;
+          stack.unshift(stack.pop()!);
+        };
+        // Dev toolbar API.
+        server.middlewares.use(async (req, res, next) => {
+          if (!req.url?.startsWith('/__uniblog/')) return next();
+          const url = new URL(req.url, 'http://x');
+          const send = (code: number, data: unknown) => {
+            res.statusCode = code;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(data));
+          };
+          try {
+            const cfg = loadSiteConfig(process.cwd(), true);
+            if (url.pathname === '/__uniblog/status/') {
+              const hit = pages.get(url.searchParams.get('path') ?? '');
+              if (!hit) return send(200, { found: false, pending: [], skipped: [] });
+              const { item, resolved: r } = hit;
+              const plan = planJobs(cfg, process.cwd(), { keys: [item.key] });
+              const mine = (x: { item: SourceItem }) => x.item.collection === item.collection;
+              return send(200, {
+                found: true,
+                key: item.key,
+                collection: item.collection,
+                locale: r.locale,
+                sourceLocale: item.lang,
+                status: r.status,
+                derivedFrom: r.derivedFrom,
+                pending: plan.jobs.filter(mine).map((j) => ({ locale: j.locale, reason: j.reason })),
+                skipped: plan.skipped.filter(mine).map((j) => ({ locale: j.locale, reason: j.reason })),
+              });
+            }
+            if (url.pathname === '/__uniblog/translate/' && req.method === 'POST') {
+              let raw = '';
+              for await (const chunk of req) raw += chunk;
+              const body = JSON.parse(raw || '{}') as { key?: string; locale?: string; force?: boolean };
+              if (!body.key) return send(400, { error: 'key required' });
+              const plan = planJobs(cfg, process.cwd(), { keys: [body.key], locales: body.locale ? [body.locale] : undefined, force: body.force });
+              const log: string[] = [];
+              const res2 = await runJobs(cfg, process.cwd(), plan.jobs, { log: (m) => (log.push(m), logger.info(m)) });
+              run();
+              return send(200, { log, failed: res2.failed.length });
+            }
+            return send(404, { error: 'not found', path: url.pathname });
+          } catch (e) {
+            return send(500, { error: String(e), log: [String(e)], failed: 1 });
+          }
+        });
+        front();
         // Serve page-bundle assets (PDFs, downloads, raw images) next to their page.
         server.middlewares.use((req, res, next) => {
           const path = decodeURIComponent((req.url ?? '').split('?')[0]!);
@@ -91,6 +154,7 @@ export default function uniblog(): AstroIntegration {
           res.setHeader('Content-Type', MIME[extname(file).toLowerCase()] ?? 'application/octet-stream');
           createReadStream(file).pipe(res);
         });
+        front();
       },
       'astro:build:done': ({ dir, logger }) => {
         const out = fileURLToPath(dir);
