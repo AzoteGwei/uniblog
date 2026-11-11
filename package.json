@@ -18,9 +18,10 @@
     "i18n:status": "tsx cli/index.ts status",
     "uniblog": "tsx cli/index.ts",
     "astro": "astro",
-    "check": "astro check && tsc --noEmit -p tsconfig.json",
+    "check": "astro check && pnpm check:licenses",
     "test": "vitest run",
-    "test:e2e": "tsx scripts/e2e.ts"
+    "test:e2e": "tsx scripts/e2e.ts",
+    "check:licenses": "tsx scripts/check-licenses.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
