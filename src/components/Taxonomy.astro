@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import PostList from './PostList.astro';
+import { localeHome, type Post } from '../lib/content';
+import { t, termLabel } from '../lib/ui';
+
+interface Props {
+  locale: string;
+  kind: 'tags' | 'categories';
+  posts: Post[];
+  term?: string;
+}
+const { locale, kind, posts, term } = Astro.props;
+const counts = new Map<string, number>();
+for (const p of posts) for (const k of p.data[kind]) counts.set(k, (counts.get(k) ?? 0) + 1);
+const terms = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const base = `${localeHome(locale)}${kind}/`;
+const title = term ? termLabel(locale, kind, term) : t(locale, `${kind}.title`);
+---
+<Base locale={locale} title={title}>
+  <div class="page">
+    {term && <p class="ui"><a href={base}>{t(locale, `${kind}.title`)}</a></p>}
+    <h1>{term ? (kind === 'tags' ? `#${title}` : title) : title}</h1>
+    {term ? (
+      <PostList posts={posts.filter((p) => p.data[kind].includes(term))} locale={locale} />
+    ) : (
+      <ul class="cloud ui">
+        {terms.map(([k, n]) => <li><a href={`${base}${k}/`}>{termLabel(locale, kind, k)} <span class="muted">{n}</span></a></li>)}
+      </ul>
+    )}
+  </div>
+</Base>
+
+<style>
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 0; }
+  h1 { font-family: var(--font-heading); }
+  .cloud { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .cloud a { display: inline-block; padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; color: var(--fg); text-decoration: none; }
+  .cloud a:hover { border-color: var(--accent); color: var(--accent); }
+</style>

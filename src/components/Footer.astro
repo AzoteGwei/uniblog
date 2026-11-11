@@ -1,0 +1,25 @@
+---
+import { cfg } from '../lib/content';
+import { t } from '../lib/ui';
+
+interface Props {
+  locale: string;
+}
+const { locale } = Astro.props;
+const year = new Date().getFullYear();
+const lic = cfg.contentLicense;
+---
+<footer class="site-footer ui">
+  <p>
+    © {year} {cfg.author} ·
+    <Fragment set:html={t(locale, 'footer.license', { license: `<a href="${lic.url}" rel="license">${lic.name}</a>` })} />
+  </p>
+</footer>
+
+<style>
+  .site-footer {
+    max-width: 76rem; margin: 4rem auto 0; padding: 1.5rem 1.25rem 2.5rem;
+    border-top: 1px solid var(--border); color: var(--fg-muted); font-size: 0.85rem;
+  }
+  .site-footer a { color: inherit; }
+</style>

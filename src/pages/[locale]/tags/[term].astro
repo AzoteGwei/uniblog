@@ -1,0 +1,17 @@
+---
+import Taxonomy from '../../../components/Taxonomy.astro';
+import { cfg, LOCALES, postsIn } from '../../../lib/content';
+import { localePath } from '../../../lib/locales';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const locale of LOCALES) {
+    const posts = await postsIn(locale);
+    const terms = new Set(posts.flatMap((p) => p.data.tags));
+    for (const term of terms) paths.push({ params: { locale: localePath(cfg, locale), term }, props: { locale, posts } });
+  }
+  return paths;
+}
+const { locale, posts } = Astro.props;
+---
+<Taxonomy locale={locale} kind="tags" posts={posts} term={Astro.params.term} />

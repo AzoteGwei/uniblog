@@ -1,0 +1,22 @@
+---
+import Article from '../../../layouts/Article.astro';
+import { cfg, LOCALES, postsIn, slugOf } from '../../../lib/content';
+import { localePath } from '../../../lib/locales';
+
+export async function getStaticPaths() {
+  const paths = [];
+  for (const locale of LOCALES) {
+    const posts = await postsIn(locale);
+    posts.forEach((entry, i) =>
+      paths.push({
+        params: { locale: localePath(cfg, locale), slug: slugOf(entry) },
+        props: { entry, prev: posts[i + 1], next: posts[i - 1] },
+      }),
+    );
+  }
+  return paths;
+}
+
+const { entry, prev, next } = Astro.props;
+---
+<Article entry={entry} prev={prev} next={next} />

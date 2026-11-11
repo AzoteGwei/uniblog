@@ -1,0 +1,14 @@
+---
+import Article from '../../layouts/Article.astro';
+import { allEntries, cfg, slugOf } from '../../lib/content';
+import { localePath } from '../../lib/locales';
+
+export async function getStaticPaths() {
+  return (await allEntries('pages')).map((entry) => ({
+    params: { locale: localePath(cfg, entry.data.uniblog.locale), slug: slugOf(entry) },
+    props: { entry },
+  }));
+}
+const { entry } = Astro.props;
+---
+<Article entry={entry} />

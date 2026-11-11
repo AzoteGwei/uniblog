@@ -1,0 +1,53 @@
+---
+import type { MarkdownHeading } from 'astro';
+import { t } from '../lib/ui';
+
+interface Props {
+  headings: MarkdownHeading[];
+  locale: string;
+}
+const { headings, locale } = Astro.props;
+const items = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+---
+{items.length > 1 && (
+  <nav class="toc ui" aria-label={t(locale, 'toc.title')}>
+    <p class="title">{t(locale, 'toc.title')}</p>
+    <ol>
+      {items.map((h) => (
+        <li class={`d${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>
+      ))}
+    </ol>
+  </nav>
+)}
+
+<script>
+  const links = new Map<string, HTMLAnchorElement>();
+  document.querySelectorAll<HTMLAnchorElement>('.toc a').forEach((a) => links.set(decodeURIComponent(a.hash.slice(1)), a));
+  if (links.size) {
+    const visible = new Set<string>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) e.isIntersecting ? visible.add(e.target.id) : visible.delete(e.target.id);
+        const ids = [...links.keys()];
+        const current = ids.find((id) => visible.has(id));
+        if (!current) return;
+        links.forEach((a, id) => a.toggleAttribute('aria-current', id === current));
+      },
+      { rootMargin: '-10% 0px -70% 0px' },
+    );
+    links.forEach((_, id) => {
+      const el = document.getElementById(id);
+      if (el) obs.observe(el);
+    });
+  }
+</script>
+
+<style>
+  .toc { font-size: 0.85rem; }
+  .title { margin: 0 0 0.5rem; font-weight: 600; color: var(--fg); }
+  ol { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--border); }
+  li a { display: block; padding: 0.2rem 0 0.2rem 0.8rem; margin-left: -1px; color: var(--fg-muted); text-decoration: none; border-left: 2px solid transparent; line-height: 1.45; }
+  li.d3 a { padding-left: 1.6rem; }
+  li a:hover { color: var(--fg); }
+  li a[aria-current] { color: var(--accent); border-left-color: var(--accent); }
+</style>

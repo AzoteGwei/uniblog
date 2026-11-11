@@ -1,0 +1,45 @@
+---
+import type { Entry, Peer } from '../lib/content';
+import { cfg } from '../lib/content';
+import { t } from '../lib/ui';
+
+interface Props {
+  entry: Entry;
+  peers: Peer[];
+}
+const { entry, peers } = Astro.props;
+const a = entry.data.uniblog;
+const L = a.locale;
+const label = (code: string) => cfg.locales[code]?.label ?? code;
+const source = peers.find((p) => p.locale === a.sourceLocale);
+const messages: string[] = [];
+let tone: 'info' | 'warn' = 'info';
+if (a.status === 'machine') messages.push(t(L, 'banner.machine', { source: label(a.sourceLocale), engine: a.model ?? a.provider ?? 'MT' }));
+if (a.status === 'reviewed') messages.push(t(L, 'banner.reviewed', { source: label(a.sourceLocale) }));
+if (a.status === 'stale') {
+  messages.push(t(L, 'banner.stale'));
+  tone = 'warn';
+}
+if (a.status === 'fallback') {
+  messages.push(t(L, 'banner.fallback', { locale: label(L), source: label(a.sourceLocale) }));
+  tone = 'warn';
+}
+if (a.derivedFrom && a.status !== 'source') messages.push(t(L, 'banner.derived', { from: label(a.derivedFrom) }));
+const showSourceLink = source && a.status !== 'source' && a.status !== 'human' && a.locale !== a.sourceLocale;
+---
+{messages.length > 0 && (
+  <aside class:list={['banner', 'ui', tone]} role="note" data-pagefind-ignore>
+    <span>{messages.join(' ')}</span>
+    {showSourceLink && <a href={source.url} hreflang={source.locale}>{t(L, 'banner.viewSource')} →</a>}
+  </aside>
+)}
+
+<style>
+  .banner {
+    display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; align-items: baseline; justify-content: space-between;
+    margin: 0 0 1.5rem; padding: 0.6rem 0.9rem; font-size: 0.88rem;
+    background: var(--accent-soft); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+  }
+  .banner.warn { border-left-color: light-dark(#c2410c, #fb923c); background: light-dark(#fff4e6, #3a2716); }
+</style>

@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../../components/PostList.astro';
+import { localePaths, postsIn, siteDescription, siteTitle } from '../../lib/content';
+import { t } from '../../lib/ui';
+
+export const getStaticPaths = localePaths;
+const { locale } = Astro.props;
+const posts = await postsIn(locale);
+---
+<Base locale={locale}>
+  <div class="page">
+    <section class="hero">
+      <h1>{siteTitle(locale)}</h1>
+      <p class="muted">{siteDescription(locale)}</p>
+    </section>
+    <h2 class="section ui muted">{t(locale, 'home.latest')}</h2>
+    <PostList posts={posts} locale={locale} />
+  </div>
+</Base>
+
+<style>
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 0; }
+  .hero h1 { font-family: var(--font-heading); font-size: clamp(2rem, 5vw, 2.8rem); margin: 0; letter-spacing: -0.015em; }
+  .hero p { margin: 0.4rem 0 2.5rem; font-size: 1.1rem; }
+  .section { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin: 0 0 0.5rem; }
+</style>

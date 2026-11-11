@@ -1,3 +1,39 @@
 ---
+import { cfg, localeHome, siteTitle } from '../lib/content';
+
+const homes = Object.entries(cfg.locales).map(([code, l]) => ({ code, label: l.label, url: localeHome(code) }));
+const map = Object.fromEntries(homes.map((h) => [h.code.toLowerCase(), h.url]));
+const fallback = localeHome(cfg.defaultLocale);
 ---
-<html lang="zh-Hans"><body><h1>uniblog</h1></body></html>
+<!doctype html>
+<html lang={cfg.defaultLocale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{siteTitle(cfg.defaultLocale)}</title>
+    <meta name="robots" content="noindex" />
+    {homes.map((h) => <link rel="alternate" hreflang={h.code} href={new URL(h.url, Astro.site)} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL(fallback, Astro.site)} />
+    <script is:inline define:vars={{ map, fallback }}>
+      (() => {
+        const pick = (tag) => {
+          tag = tag.toLowerCase();
+          if (map[tag]) return map[tag];
+          if (/^zh-(tw|hk|mo)|^zh-hant/.test(tag)) return map['zh-hant'];
+          if (tag.startsWith('zh')) return map['zh-hans'];
+          const base = tag.split('-')[0];
+          const k = Object.keys(map).find((c) => c.split('-')[0] === base);
+          return k && map[k];
+        };
+        let saved = null;
+        try { saved = localStorage.getItem('uniblog-locale'); } catch {}
+        const target = (saved && map[saved]) || navigator.languages.map(pick).find(Boolean) || fallback;
+        location.replace(target);
+      })();
+    </script>
+    <noscript><meta http-equiv="refresh" content={`0; url=${fallback}`} /></noscript>
+  </head>
+  <body>
+    <ul>{homes.map((h) => <li><a href={h.url} hreflang={h.code} lang={h.code}>{h.label}</a></li>)}</ul>
+  </body>
+</html>

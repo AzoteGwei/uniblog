@@ -1,0 +1,37 @@
+---
+import Base from '../../layouts/Base.astro';
+import { entryUrl, localePaths, postsIn } from '../../lib/content';
+import { t } from '../../lib/ui';
+
+export const getStaticPaths = localePaths;
+const { locale } = Astro.props;
+const posts = await postsIn(locale);
+const years = Map.groupBy(posts, (p) => p.data.date.getFullYear());
+const md = new Intl.DateTimeFormat(locale, { month: '2-digit', day: '2-digit' });
+---
+<Base locale={locale} title={t(locale, 'archive.title')}>
+  <div class="page">
+    <h1>{t(locale, 'archive.title')}</h1>
+    {[...years].map(([year, list]) => (
+      <section>
+        <h2 class="ui">{year} <span class="muted">({list.length})</span></h2>
+        <ul>
+          {list.map((p) => (
+            <li><time class="ui muted">{md.format(p.data.date)}</time><a href={entryUrl(p)}>{p.data.title}</a></li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 0; }
+  h1 { font-family: var(--font-heading); }
+  h2 { font-size: 1.1rem; margin: 2rem 0 0.5rem; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { display: flex; gap: 1rem; padding: 0.35rem 0; border-bottom: 1px dashed var(--border); }
+  time { font-variant-numeric: tabular-nums; font-size: 0.9rem; min-width: 3.2rem; }
+  li a { color: var(--fg); text-decoration: none; }
+  li a:hover { color: var(--accent); }
+</style>

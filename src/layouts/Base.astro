@@ -1,0 +1,77 @@
+---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/source-serif-4';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { cfg, LOCALES, localeHome, siteTitle, siteDescription } from '../lib/content';
+
+export interface Alternate {
+  locale: string;
+  url: string;
+}
+
+interface Props {
+  locale: string;
+  title?: string;
+  description?: string;
+  /** Language versions of this page; defaults to every locale home. */
+  alternates?: Alternate[];
+  canonical?: string;
+  noindex?: boolean;
+  type?: 'website' | 'article';
+}
+
+const { locale, title, description, canonical, noindex = false, type = 'website' } = Astro.props;
+const alternates: Alternate[] = Astro.props.alternates ?? LOCALES.map((l) => ({ locale: l, url: localeHome(l) }));
+const site = siteTitle(locale);
+const fullTitle = title ? `${title} · ${site}` : site;
+const desc = description ?? siteDescription(locale);
+const canonicalUrl = new URL(canonical ?? Astro.url.pathname, Astro.site);
+const xDefault = alternates.find((a) => a.locale === cfg.defaultLocale) ?? alternates[0];
+const dir = cfg.locales[locale]?.dir ?? 'ltr';
+const defaultStyle = cfg.theme.style;
+const styles = cfg.theme.styles;
+---
+<!doctype html>
+<html lang={locale} dir={dir} data-style={defaultStyle} data-theme="auto">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="canonical" href={canonicalUrl} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.locale} href={new URL(a.url, Astro.site)} />)}
+    {xDefault && <link rel="alternate" hreflang="x-default" href={new URL(xDefault.url, Astro.site)} />}
+    <link rel="alternate" type="application/rss+xml" title={site} href={`${localeHome(locale)}rss.xml`} />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title ?? site} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:locale" content={locale.replace('-', '_')} />
+    <meta name="generator" content={Astro.generator} />
+    <script is:inline define:vars={{ styles }}>
+      (() => {
+        const d = document.documentElement;
+        try {
+          const s = localStorage.getItem('uniblog-style');
+          const t = localStorage.getItem('uniblog-theme');
+          if (s && styles.includes(s)) d.dataset.style = s;
+          if (t === 'light' || t === 'dark') d.dataset.theme = t;
+        } catch {}
+      })();
+    </script>
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="sr-only" href="#main">Skip to content</a>
+    <Header locale={locale} alternates={alternates} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer locale={locale} />
+  </body>
+</html>

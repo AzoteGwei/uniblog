@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import { cfg, localeHome } from '../lib/content';
+import { t } from '../lib/ui';
+
+const locale = cfg.defaultLocale;
+---
+<Base locale={locale} title={t(locale, 'notfound.title')} noindex>
+  <div class="page">
+    <h1>404</h1>
+    <ul class="ui">
+      {Object.keys(cfg.locales).map((l) => (
+        <li lang={l}>{t(l, 'notfound.title')} — <a href={localeHome(l)}>{t(l, 'notfound.back')}</a></li>
+      ))}
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .page { max-width: 46rem; margin: 0 auto; padding: 4rem 1.25rem; }
+  h1 { font-size: 4rem; margin: 0; font-family: var(--font-heading); }
+  ul { padding-left: 1.2rem; }
+</style>

@@ -1,0 +1,41 @@
+---
+import { entryUrl, formatDate, type Post } from '../lib/content';
+import { termLabel } from '../lib/ui';
+
+interface Props {
+  posts: Post[];
+  locale: string;
+}
+const { posts, locale } = Astro.props;
+---
+<ul class="post-list">
+  {posts.map((p) => (
+    <li>
+      <article>
+        <time class="ui muted" datetime={p.data.date.toISOString()}>{formatDate(p.data.date, locale)}</time>
+        <h2><a href={entryUrl(p)}>{p.data.title}</a></h2>
+        {(p.data.summary || p.data.description) && <p class="summary">{p.data.summary || p.data.description}</p>}
+        {(p.data.tags.length > 0 || p.data.uniblog.status === 'fallback' || p.data.draft) && (
+          <p class="meta ui">
+            {p.data.draft && <span class="badge">draft</span>}
+            {p.data.uniblog.status === 'fallback' && <span class="badge" lang={p.data.uniblog.sourceLocale}>{p.data.uniblog.sourceLocale}</span>}
+            {p.data.tags.map((tag) => <span class="tag">#{termLabel(locale, 'tags', tag)}</span>)}
+          </p>
+        )}
+      </article>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .post-list { list-style: none; padding: 0; margin: 0; }
+  .post-list li { padding: 1.4rem 0; border-bottom: 1px solid var(--border); }
+  .post-list li:first-child { padding-top: 0.5rem; }
+  time { font-size: 0.85rem; }
+  h2 { margin: 0.2rem 0 0.4rem; font-family: var(--font-heading); font-size: 1.35rem; line-height: 1.35; }
+  h2 a { color: var(--fg); text-decoration: none; }
+  h2 a:hover { color: var(--accent); }
+  .summary { margin: 0; color: var(--fg-muted); }
+  .meta { margin: 0.5rem 0 0; display: flex; gap: 0.6rem; flex-wrap: wrap; font-size: 0.82rem; color: var(--fg-muted); }
+  .badge { border: 1px solid var(--border); border-radius: 999px; padding: 0 0.5rem; }
+</style>

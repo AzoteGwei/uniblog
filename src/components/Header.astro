@@ -1,0 +1,149 @@
+---
+import { cfg, localeHome, siteTitle } from '../lib/content';
+import { t } from '../lib/ui';
+import type { Alternate } from '../layouts/Base.astro';
+
+interface Props {
+  locale: string;
+  alternates: Alternate[];
+}
+const { locale, alternates } = Astro.props;
+const home = localeHome(locale);
+const langs = Object.entries(cfg.locales).map(([code, l]) => ({
+  code,
+  label: l.label,
+  url: alternates.find((a) => a.locale === code)?.url ?? localeHome(code),
+}));
+const path = Astro.url.pathname;
+const nav = [
+  { href: home, label: t(locale, 'nav.posts'), active: path === home },
+  { href: `${home}archive/`, label: t(locale, 'nav.archive') },
+  { href: `${home}tags/`, label: t(locale, 'nav.tags') },
+  { href: `${home}categories/`, label: t(locale, 'nav.categories') },
+].map((n) => ({ ...n, active: n.active ?? path.startsWith(n.href) }));
+---
+<header class="site-header ui">
+  <div class="inner">
+    <a class="brand" href={home}>{siteTitle(locale)}</a>
+    <nav class="nav" aria-label="primary">
+      {nav.map((n) => <a href={n.href} aria-current={n.active ? 'page' : undefined}>{n.label}</a>)}
+    </nav>
+    <div class="tools">
+      <button class="search-btn" type="button" data-open-palette aria-label={t(locale, 'search.open')}>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span class="label">{t(locale, 'search.open')}</span>
+        <kbd>/</kbd>
+      </button>
+      <details class="menu">
+        <summary aria-label={t(locale, 'lang.label')}>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-2.9a15.7 15.7 0 0 0-1.4-3.6A8 8 0 0 1 18.9 8ZM12 4c.8 1.2 1.5 2.5 1.9 4h-3.8c.4-1.5 1.1-2.8 1.9-4ZM4.3 14a8.2 8.2 0 0 1 0-4h3.4a16.5 16.5 0 0 0 0 4H4.3Zm.8 2H8c.3 1.3.8 2.5 1.4 3.6A8 8 0 0 1 5.1 16ZM8 8H5.1a8 8 0 0 1 4.3-3.6C8.8 5.5 8.4 6.7 8 8Zm4 12c-.8-1.2-1.5-2.5-1.9-4h3.8c-.4 1.5-1.1 2.8-1.9 4Zm2.3-6H9.7a14.7 14.7 0 0 1 0-4h4.6a14.7 14.7 0 0 1 0 4Zm.3 5.6c.6-1.1 1.1-2.3 1.4-3.6h2.9a8 8 0 0 1-4.3 3.6Zm1.7-5.6a16.5 16.5 0 0 0 0-4h3.4a8.2 8.2 0 0 1 0 4h-3.4Z"/></svg>
+          <span class="label">{cfg.locales[locale]?.label}</span>
+        </summary>
+        <ul>
+          {langs.map((l) => (
+            <li><a href={l.url} hreflang={l.code} lang={l.code} aria-current={l.code === locale ? 'true' : undefined}>{l.label}</a></li>
+          ))}
+        </ul>
+      </details>
+      <details class="menu">
+        <summary aria-label={t(locale, 'style.label')}>
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M12 3a9 9 0 0 0 0 18c1 0 1.6-.8 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3Zm-5.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm3 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"/></svg>
+        </summary>
+        <div class="panel">
+          <p class="muted">{t(locale, 'style.label')}</p>
+          <div class="seg" role="group">
+            {cfg.theme.styles.map((s) => <button type="button" data-set-style={s}>{s}</button>)}
+          </div>
+          <p class="muted">{t(locale, 'theme.label')}</p>
+          <div class="seg" role="group">
+            {(['auto', 'light', 'dark'] as const).map((m) => <button type="button" data-set-theme={m}>{t(locale, `theme.${m}`)}</button>)}
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<script>
+  const root = document.documentElement;
+  const sync = () => {
+    document.querySelectorAll<HTMLButtonElement>('[data-set-style]').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.setStyle === root.dataset.style)),
+    );
+    document.querySelectorAll<HTMLButtonElement>('[data-set-theme]').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.setTheme === root.dataset.theme)),
+    );
+  };
+  document.addEventListener('click', (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-set-style],[data-set-theme]');
+    if (!el) {
+      document.querySelectorAll<HTMLDetailsElement>('.menu[open]').forEach((d) => {
+        if (!d.contains(e.target as Node)) d.open = false;
+      });
+      return;
+    }
+    if (el.dataset.setStyle) {
+      root.dataset.style = el.dataset.setStyle;
+      localStorage.setItem('uniblog-style', el.dataset.setStyle);
+    }
+    if (el.dataset.setTheme) {
+      root.dataset.theme = el.dataset.setTheme;
+      if (el.dataset.setTheme === 'auto') localStorage.removeItem('uniblog-theme');
+      else localStorage.setItem('uniblog-theme', el.dataset.setTheme);
+    }
+    sync();
+  });
+  sync();
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: var(--header-h);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.92rem;
+  }
+  .inner { max-width: 76rem; margin: 0 auto; height: 100%; display: flex; align-items: center; gap: 1.5rem; padding: 0 1.25rem; }
+  .brand { font-weight: 700; color: var(--fg); text-decoration: none; font-family: var(--font-heading); font-size: 1.05rem; white-space: nowrap; }
+  .nav { display: flex; gap: 1.1rem; overflow-x: auto; scrollbar-width: none; }
+  .nav a { color: var(--fg-muted); text-decoration: none; white-space: nowrap; }
+  .nav a:hover, .nav a[aria-current] { color: var(--fg); }
+  .nav a[aria-current] { box-shadow: inset 0 -2px var(--accent); }
+  .tools { margin-left: auto; display: flex; align-items: center; gap: 0.4rem; }
+  .search-btn, .menu > summary {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    height: 2rem; padding: 0 0.6rem;
+    color: var(--fg-muted); background: var(--bg-elev);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    font: inherit; cursor: pointer; list-style: none;
+  }
+  .menu > summary::-webkit-details-marker { display: none; }
+  .search-btn:hover, .menu > summary:hover { color: var(--fg); }
+  .search-btn kbd { font: 0.75rem var(--font-mono); border: 1px solid var(--border); border-radius: 3px; padding: 0 0.3em; }
+  .menu { position: relative; }
+  .menu ul, .menu .panel {
+    position: absolute; right: 0; top: calc(100% + 0.4rem);
+    min-width: 11rem; margin: 0; padding: 0.4rem;
+    background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); list-style: none;
+  }
+  .menu li a { display: block; padding: 0.35rem 0.6rem; border-radius: 4px; color: var(--fg); text-decoration: none; }
+  .menu li a:hover { background: var(--bg-sunk); }
+  .menu li a[aria-current] { color: var(--accent); font-weight: 600; }
+  .panel { min-width: 16rem !important; padding: 0.6rem 0.8rem !important; }
+  .panel p { margin: 0.2rem 0 0.3rem; font-size: 0.8rem; }
+  .seg { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.5rem; }
+  .seg button {
+    flex: 1; padding: 0.3rem 0.5rem; font: inherit; font-size: 0.85rem; text-transform: capitalize;
+    color: var(--fg); background: var(--bg); border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
+  }
+  .seg button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  @media (max-width: 720px) {
+    .label, .search-btn kbd { display: none; }
+    .inner { gap: 0.8rem; }
+  }
+</style>

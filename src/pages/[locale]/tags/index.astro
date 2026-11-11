@@ -1,0 +1,8 @@
+---
+import Taxonomy from '../../../components/Taxonomy.astro';
+import { localePaths, postsIn } from '../../../lib/content';
+
+export const getStaticPaths = localePaths;
+const { locale } = Astro.props;
+---
+<Taxonomy locale={locale} kind="tags" posts={await postsIn(locale)} />
