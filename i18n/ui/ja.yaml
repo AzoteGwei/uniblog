@@ -34,3 +34,9 @@ home.latest: 最新記事
 footer.license: コンテンツは {license} の下で提供されています
 notfound.title: ページが見つかりません
 notfound.back: ホームへ戻る
+callout.note: 注記
+callout.tip: ヒント
+callout.info: 情報
+callout.warning: 警告
+callout.danger: 危険
+callout.caution: 注意

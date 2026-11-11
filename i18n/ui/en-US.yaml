@@ -34,3 +34,9 @@ home.latest: Latest posts
 footer.license: Content licensed under {license}
 notfound.title: Page not found
 notfound.back: Back home
+callout.note: Note
+callout.tip: Tip
+callout.info: Info
+callout.warning: Warning
+callout.danger: Danger
+callout.caution: Caution

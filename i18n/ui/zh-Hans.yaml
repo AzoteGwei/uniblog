@@ -34,3 +34,9 @@ home.latest: 最新文章
 footer.license: 内容采用 {license} 授权
 notfound.title: 页面不存在
 notfound.back: 返回首页
+callout.note: 注意
+callout.tip: 提示
+callout.info: 信息
+callout.warning: 警告
+callout.danger: 危险
+callout.caution: 小心

@@ -1,0 +1,46 @@
+/* Shortcode rendering (see src/plugins/remark-shortcodes.ts). */
+.callout {
+  --c: var(--accent);
+  margin: 0 0 1.2em; padding: 0.7em 1em;
+  border: 1px solid var(--border); border-left: 3px solid var(--c);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c) 6%, var(--bg));
+}
+.callout > :last-child { margin-bottom: 0; }
+.callout-title { font: 600 0.88rem var(--font-ui); color: var(--c); margin: 0 0 0.3em !important; text-transform: none; }
+.callout-tip { --c: light-dark(#15803d, #4ade80); }
+.callout-info { --c: light-dark(#0369a1, #38bdf8); }
+.callout-warning, .callout-caution { --c: light-dark(#b45309, #fbbf24); }
+.callout-danger { --c: light-dark(#b91c1c, #f87171); }
+
+.prose details { margin: 0 0 1.2em; border: 1px solid var(--border); border-radius: var(--radius); padding: 0 1em; }
+.prose details > summary { cursor: pointer; padding: 0.6em 0; font-family: var(--font-ui); font-weight: 600; }
+.prose details[open] > summary { border-bottom: 1px solid var(--border); margin-bottom: 0.8em; }
+
+.tabs { display: flex; flex-wrap: wrap; margin: 0 0 1.2em; }
+.tabs .tab-radio { position: absolute; opacity: 0; pointer-events: none; }
+.tabs .tab-label {
+  order: 0; padding: 0.35em 0.9em; cursor: pointer;
+  font: 500 0.88rem var(--font-ui); color: var(--fg-muted);
+  border-bottom: 2px solid var(--border);
+}
+.tabs .tab-panel { order: 1; width: 100%; display: none; padding-top: 0.8em; }
+.tabs .tab-panel > :last-child { margin-bottom: 0; }
+.tabs .tab-radio:checked + .tab-label { color: var(--accent); border-bottom-color: var(--accent); }
+.tabs .tab-radio:checked + .tab-label + .tab-panel { display: block; }
+.tabs .tab-radio:focus-visible + .tab-label { outline: 2px solid var(--accent); }
+.tabs::after { content: ''; order: 0; flex: 1; border-bottom: 2px solid var(--border); }
+
+.steps { counter-reset: step; margin: 0 0 1.2em; padding-left: 2.4em; border-left: 1px solid var(--border); margin-left: 0.9em; }
+.steps > h3, .steps > h4 { counter-increment: step; position: relative; margin-top: 1.4em; border: 0; }
+.steps > :is(h3, h4):first-child { margin-top: 0; }
+.steps > :is(h3, h4)::before {
+  content: counter(step);
+  position: absolute; left: -3.3em; top: 0;
+  width: 1.8em; height: 1.8em; display: grid; place-items: center;
+  font: 600 0.8rem var(--font-ui); color: var(--accent);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 50%;
+}
+
+.embed { position: relative; aspect-ratio: 16 / 9; margin: 0 0 1.2em; }
+.embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: var(--radius); }
