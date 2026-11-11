@@ -81,7 +81,19 @@ Shortcode（remark-directive）：
 
 ### 繁簡轉換
 
-- 簡體源文 → 繁體版本自動由 OpenCC（`s2twp`）生成；繁體源文則反向。
+- 簡體源文 → 繁體由 OpenCC `s2twp` 生成；繁體源文（`lang: zh-Hant`）→ 簡體默認用 `tw2sp`（含詞彙，如 記憶體→内存），可在 `site.yaml` 改成只轉字形的 `tw2s`。
+- 以繁體為主時，`site.yaml` 改三處即可：
+
+  ```yaml
+  defaultLocale: zh-Hant
+  locales:
+    zh-Hans: { path: zh-hans, label: 简体中文, derive: { from: zh-Hant, opencc: tw2sp } }  # 或 tw2s
+    zh-Hant: { path: zh-hant, label: 繁體中文 }
+  translate:
+    zhPivot: zh-Hant        # 日/英源文先機翻成繁體，再 OpenCC 派生簡體
+  ```
+
+  界面字串同理：`i18n/ui/` 裡只要有一個中文變體的完整檔案，另一個就自動派生，自己的檔案只需寫覆寫項。
 - `-{zh-hans:内存;zh-hant:記憶體;}-` 按變體取值；`-{原樣}-` 不轉換。
 - 全局詞對寫在 `i18n/glossary.yaml` 的 `opencc:`。
 - 代碼、行內代碼、連結地址、HTML 標籤不轉換。
