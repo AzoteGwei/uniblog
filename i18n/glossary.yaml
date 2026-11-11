@@ -1,0 +1,12 @@
+# Translation glossary (CC-BY-4.0, like the content).
+# terms: injected into LLM prompts / provider glossaries when the source form occurs.
+#   keys are locale codes; `note` is guidance for the translator; `dnt: true` = do not translate.
+terms:
+  - zh-Hans: 安全
+    en-US: security
+    ja: セキュリティ
+  - zh-Hans: uniblog
+    dnt: true
+# opencc: manual zh variant pairs applied before OpenCC (like Wikipedia conversion groups).
+opencc:
+  - { zh-hans: 博客, zh-hant: 部落格 }

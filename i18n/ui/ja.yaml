@@ -1,0 +1,36 @@
+nav.posts: 記事
+nav.archive: アーカイブ
+nav.tags: タグ
+nav.categories: カテゴリー
+search.open: 検索
+search.placeholder: 記事を検索…
+search.empty: 結果がありません
+search.commands: コマンド
+toc.title: 目次
+post.published: 公開日
+post.updated: 更新日
+post.minutes: "{n} 分で読めます"
+post.prev: 前の記事
+post.next: 次の記事
+banner.machine: この記事は {engine} により {source} から機械翻訳されました。
+banner.reviewed: この記事は {source} から翻訳され、人によって確認されています。
+banner.stale: 原文が更新されています。この翻訳は古い可能性があります。
+banner.fallback: この記事の{locale}版はまだありません。{source}の原文を表示しています。
+banner.derived: この記事は {from} 版から OpenCC により自動変換されました。
+banner.viewSource: 原文を読む
+theme.label: テーマ
+theme.light: ライト
+theme.dark: ダーク
+theme.auto: システム
+style.label: スタイル
+lang.label: 言語
+compare.open: 対訳表示
+compare.close: 対訳を閉じる
+compare.with: 比較する言語
+archive.title: アーカイブ
+tags.title: タグ
+categories.title: カテゴリー
+home.latest: 最新記事
+footer.license: コンテンツは {license} の下で提供されています
+notfound.title: ページが見つかりません
+notfound.back: ホームへ戻る

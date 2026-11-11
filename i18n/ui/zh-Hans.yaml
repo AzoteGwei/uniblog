@@ -1,0 +1,36 @@
+nav.posts: 文章
+nav.archive: 归档
+nav.tags: 标签
+nav.categories: 分类
+search.open: 搜索
+search.placeholder: 搜索文章…
+search.empty: 没有结果
+search.commands: 命令
+toc.title: 本页目录
+post.published: 发布于
+post.updated: 更新于
+post.minutes: "{n} 分钟阅读"
+post.prev: 上一篇
+post.next: 下一篇
+banner.machine: 本文由 {engine} 自动翻译自 {source}。
+banner.reviewed: 本文译自 {source}，已经人工校对。
+banner.stale: 原文已更新，本译文可能已过时。
+banner.fallback: 本文暂无 {locale} 版本，以下为 {source} 原文。
+banner.derived: 本文由 {from} 版本经 OpenCC 自动转换。
+banner.viewSource: 查看原文
+theme.label: 明暗
+theme.light: 亮色
+theme.dark: 暗色
+theme.auto: 跟随系统
+style.label: 风格
+lang.label: 语言
+compare.open: 双语对照
+compare.close: 关闭对照
+compare.with: 对照语言
+archive.title: 归档
+tags.title: 标签
+categories.title: 分类
+home.latest: 最新文章
+footer.license: 内容采用 {license} 授权
+notfound.title: 页面不存在
+notfound.back: 返回首页

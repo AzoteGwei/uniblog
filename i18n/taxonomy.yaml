@@ -1,0 +1,6 @@
+# Stable tag/category keys → display names. zh-Hant falls back to OpenCC(zh-Hans).
+tags:
+  meta: { zh-Hans: 站务, en-US: Meta, ja: サイト運営 }
+  i18n: { zh-Hans: 国际化, en-US: i18n, ja: 国際化 }
+categories:
+  notes: { zh-Hans: 随笔, en-US: Notes, ja: 雑記 }

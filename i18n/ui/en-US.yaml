@@ -1,0 +1,36 @@
+nav.posts: Posts
+nav.archive: Archive
+nav.tags: Tags
+nav.categories: Categories
+search.open: Search
+search.placeholder: Search posts…
+search.empty: No results
+search.commands: Commands
+toc.title: On this page
+post.published: Published
+post.updated: Updated
+post.minutes: "{n} min read"
+post.prev: Previous
+post.next: Next
+banner.machine: Machine-translated from {source} by {engine}.
+banner.reviewed: Translated from {source} and reviewed by a human.
+banner.stale: The original has changed since this translation was made.
+banner.fallback: This post is not available in {locale} yet; showing the {source} original.
+banner.derived: Automatically converted from the {from} version with OpenCC.
+banner.viewSource: Read the original
+theme.label: Theme
+theme.light: Light
+theme.dark: Dark
+theme.auto: System
+style.label: Style
+lang.label: Language
+compare.open: Side by side
+compare.close: Close comparison
+compare.with: Compare with
+archive.title: Archive
+tags.title: Tags
+categories.title: Categories
+home.latest: Latest posts
+footer.license: Content licensed under {license}
+notfound.title: Page not found
+notfound.back: Back home

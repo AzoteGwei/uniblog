@@ -1,0 +1,2 @@
+# Overrides on top of OpenCC(zh-Hans). Only list strings that OpenCC gets wrong.
+post.published: 發佈於
