@@ -25,13 +25,13 @@ function uiDict(locale: string): Dict {
   if (d) return d;
   const file = (l: string) => resolve('i18n/ui', `${l}.yaml`);
   const own = readYaml(file(locale)) as Dict | undefined;
-  // Only locales with an explicit `derive` get an OpenCC base (avoids zh-Hans <-> zh-Hant cycles).
-  const from = loadSiteConfig().locales[locale]?.derive?.from;
-  const donor = from && from !== locale ? from : undefined;
+  // zh variants get an OpenCC base from a sibling's *own file* (not its merged dict, so
+  // zh-Hans <-> zh-Hant never recurse). Either direction works: s2twp or tw2sp.
   const derived: Dict = {};
+  const donor = isZh(locale) ? zhDonor(locale, (l) => existsSync(file(l))) : undefined;
   if (donor) {
     const conv = openccConverter(openccPreset(loadSiteConfig(), donor, locale));
-    for (const [k, v] of Object.entries(uiDict(donor))) derived[k] = conv(v);
+    for (const [k, v] of Object.entries((readYaml(file(donor)) ?? {}) as Dict)) derived[k] = conv(v);
   }
   const fallback = (readYaml(file('en-US')) ?? {}) as Dict;
   d = { ...fallback, ...derived, ...(own ?? {}) };
