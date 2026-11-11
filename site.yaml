@@ -19,7 +19,7 @@ locales:
 
 translate:
   zhPivot: zh-Hans
-  default: { provider: gemini, model: gemini-flash-latest }
+  default: { provider: openai, model: deepseek-flash }
   overrides: {}
   onBuild: stale # stale | none
 

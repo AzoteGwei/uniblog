@@ -1,0 +1,80 @@
+# Managed by `pnpm i18n`. Tracks machine translations; commit this file.
+version: 1
+entries:
+  pages/about:
+    en-US:
+      sourceHash: sha256:8e517a7128693f84
+      glossaryHash: sha256:b9e0562992edc7cb
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:33.158Z
+      outputHash: sha256:b4ff93cf2bbd0741
+    ja:
+      sourceHash: sha256:8e517a7128693f84
+      glossaryHash: sha256:b9e0562992edc7cb
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:34.820Z
+      outputHash: sha256:ffaef463f3357562
+  posts/hello-uniblog:
+    en-US:
+      sourceHash: sha256:e015e73bd4eea627
+      glossaryHash: sha256:a1f562c1a962e76e
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T14:06:35.426Z
+      outputHash: sha256:40462f5affa8bca0
+    ja:
+      sourceHash: sha256:e015e73bd4eea627
+      glossaryHash: sha256:a1f562c1a962e76e
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:03.122Z
+      outputHash: sha256:ea693de39cab0cb0
+  posts/kotoba:
+    en-US:
+      sourceHash: sha256:be83ba9c9ee4c1f0
+      glossaryHash: sha256:4f53cda18c2baa0c
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:08.204Z
+      outputHash: sha256:1dbe7a15d875e0ba
+    zh-Hans:
+      sourceHash: sha256:be83ba9c9ee4c1f0
+      glossaryHash: sha256:4f53cda18c2baa0c
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:05.557Z
+      outputHash: sha256:267b55fee6eea382
+  posts/opencc-notes:
+    ja:
+      sourceHash: sha256:0b0c8fe6e753bc92
+      glossaryHash: sha256:4f53cda18c2baa0c
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:14.522Z
+      outputHash: sha256:66a69b753ecd4b03
+  posts/shortcodes:
+    en-US:
+      sourceHash: sha256:0cbb05e1ea5c0b90
+      glossaryHash: sha256:4f53cda18c2baa0c
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T13:59:24.480Z
+      outputHash: sha256:5c72195190492a21
+    ja:
+      sourceHash: sha256:0cbb05e1ea5c0b90
+      glossaryHash: sha256:4f53cda18c2baa0c
+      promptVersion: 1
+      provider: openai
+      model: deepseek-flash
+      translatedAt: 2026-11-11T14:06:33.716Z
+      outputHash: sha256:446f4af1b9709f5a
