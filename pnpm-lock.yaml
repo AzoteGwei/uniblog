@@ -169,6 +169,12 @@ importers:
       astro:
         specifier: ^7.4.8
         version: 7.4.8(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.12
