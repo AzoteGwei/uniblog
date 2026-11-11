@@ -40,3 +40,5 @@ callout.info: 信息
 callout.warning: 警告
 callout.danger: 危险
 callout.caution: 小心
+search.recent: 最近访问
+search.unavailable: 搜索索引尚未生成（运行 pnpm build 后可用）

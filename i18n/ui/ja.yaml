@@ -40,3 +40,5 @@ callout.info: 情報
 callout.warning: 警告
 callout.danger: 危険
 callout.caution: 注意
+search.recent: 最近見た記事
+search.unavailable: 検索インデックスがまだありません（pnpm build 後に利用できます）

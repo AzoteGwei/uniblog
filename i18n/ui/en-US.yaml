@@ -40,3 +40,5 @@ callout.info: Info
 callout.warning: Warning
 callout.danger: Danger
 callout.caution: Caution
+search.recent: Recent
+search.unavailable: Search index not built yet (available after pnpm build)

@@ -7,6 +7,7 @@ import '../styles/base.css';
 import '../styles/shortcodes.css';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Palette from '../components/Palette.astro';
 import { cfg, LOCALES, localeHome, siteTitle, siteDescription } from '../lib/content';
 
 export interface Alternate {
@@ -77,5 +78,6 @@ const styles = cfg.theme.styles;
       <slot />
     </main>
     <Footer locale={locale} />
+    <Palette locale={locale} languageLinks={languageLinks} />
   </body>
 </html>

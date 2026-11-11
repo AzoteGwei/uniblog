@@ -1,0 +1,206 @@
+---
+import { cfg, localeHome } from '../lib/content';
+import { t } from '../lib/ui';
+
+interface Props {
+  locale: string;
+  languageLinks: { locale: string; url: string }[];
+}
+const { locale, languageLinks } = Astro.props;
+const commands = [
+  ...cfg.theme.styles.map((s) => ({ label: `${t(locale, 'style.label')}: ${s}`, action: `style:${s}` })),
+  ...(['auto', 'light', 'dark'] as const).map((m) => ({ label: `${t(locale, 'theme.label')}: ${t(locale, `theme.${m}`)}`, action: `theme:${m}` })),
+  ...Object.entries(cfg.locales).map(([code, l]) => ({
+    label: `${t(locale, 'lang.label')}: ${l.label}`,
+    action: `go:${languageLinks.find((x) => x.locale === code)?.url ?? localeHome(code)}`,
+  })),
+];
+const strings = {
+  empty: t(locale, 'search.empty'),
+  commands: t(locale, 'search.commands'),
+  recent: t(locale, 'search.recent'),
+  unavailable: t(locale, 'search.unavailable'),
+};
+---
+<dialog class="palette ui" aria-label={t(locale, 'search.open')} data-strings={JSON.stringify(strings)} data-commands={JSON.stringify(commands)}>
+  <form method="dialog" class="bar">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input type="search" placeholder={t(locale, 'search.placeholder')} autocomplete="off" spellcheck="false" aria-controls="palette-results" />
+    <kbd>esc</kbd>
+  </form>
+  <ul id="palette-results" role="listbox"></ul>
+</dialog>
+
+<script>
+  type Item = { label: string; sub?: string; html?: string; action: string };
+  type PagefindResult = { data: () => Promise<{ url: string; excerpt: string; meta: { title?: string } }> };
+  type Pagefind = { search: (q: string) => Promise<{ results: PagefindResult[] } | null>; init?: () => Promise<void> };
+
+  const dlg = document.querySelector<HTMLDialogElement>('dialog.palette')!;
+  const input = dlg.querySelector('input')!;
+  const list = dlg.querySelector<HTMLUListElement>('#palette-results')!;
+  const S = JSON.parse(dlg.dataset.strings!) as Record<string, string>;
+  const commands = JSON.parse(dlg.dataset.commands!) as Item[];
+  let items: Item[] = [];
+  let active = 0;
+  let pagefind: Pagefind | null | undefined;
+  let seq = 0;
+
+  const RECENT = 'uniblog-recent';
+  const article = document.querySelector<HTMLElement>('article[data-key]');
+  if (article) {
+    const title = article.querySelector('h1')?.textContent?.trim() ?? document.title;
+    const prev = (JSON.parse(localStorage.getItem(RECENT) ?? '[]') as Item[]).filter((r) => r.action !== `go:${location.pathname}`);
+    localStorage.setItem(RECENT, JSON.stringify([{ label: title, action: `go:${location.pathname}` }, ...prev].slice(0, 6)));
+  }
+
+  async function loadPagefind(): Promise<Pagefind | null> {
+    if (pagefind !== undefined) return pagefind;
+    try {
+      const url = '/pagefind/pagefind.js';
+      pagefind = (await import(/* @vite-ignore */ url)) as Pagefind;
+      await pagefind.init?.();
+    } catch {
+      pagefind = null;
+    }
+    return pagefind;
+  }
+
+  function esc(s: string) {
+    return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  }
+
+  function render(groups: [string, Item[]][], note?: string) {
+    items = groups.flatMap(([, g]) => g);
+    active = 0;
+    let i = 0;
+    list.innerHTML =
+      (note ? `<li class="note">${esc(note)}</li>` : '') +
+      groups
+        .filter(([, g]) => g.length)
+        .map(
+          ([title, g]) =>
+            `<li class="group">${esc(title)}</li>` +
+            g
+              .map(
+                (it) =>
+                  `<li role="option" data-i="${i++}"><span class="label">${esc(it.label)}</span>${it.html ? `<span class="sub">${it.html}</span>` : ''}</li>`,
+              )
+              .join(''),
+        )
+        .join('');
+    highlight();
+  }
+
+  function highlight() {
+    list.querySelectorAll<HTMLElement>('[role=option]').forEach((el) => {
+      const on = Number(el.dataset.i) === active;
+      el.setAttribute('aria-selected', String(on));
+      if (on) el.scrollIntoView({ block: 'nearest' });
+    });
+  }
+
+  async function update() {
+    const q = input.value.trim();
+    const my = ++seq;
+    if (!q || q.startsWith('>')) {
+      const f = q.slice(1).trim().toLowerCase();
+      const cmds = commands.filter((c) => c.label.toLowerCase().includes(f));
+      const recent = q ? [] : (JSON.parse(localStorage.getItem(RECENT) ?? '[]') as Item[]);
+      render([
+        [S.recent!, recent],
+        [S.commands!, cmds],
+      ]);
+      return;
+    }
+    const pf = await loadPagefind();
+    if (my !== seq) return;
+    if (!pf) return render([], S.unavailable);
+    const res = await pf.search(q);
+    const data = await Promise.all((res?.results ?? []).slice(0, 8).map((r) => r.data()));
+    if (my !== seq) return;
+    const hits = data.map((d) => ({ label: d.meta.title ?? d.url, html: d.excerpt, action: `go:${d.url}` }));
+    render([['', hits]], hits.length ? undefined : S.empty);
+  }
+
+  function run(it: Item | undefined) {
+    if (!it) return;
+    const [kind, ...restParts] = it.action.split(':');
+    const arg = restParts.join(':');
+    const root = document.documentElement;
+    if (kind === 'go') {
+      location.href = arg;
+      return;
+    }
+    if (kind === 'style') {
+      root.dataset.style = arg;
+      localStorage.setItem('uniblog-style', arg);
+    }
+    if (kind === 'theme') {
+      root.dataset.theme = arg;
+      if (arg === 'auto') localStorage.removeItem('uniblog-theme');
+      else localStorage.setItem('uniblog-theme', arg);
+    }
+    dlg.close();
+  }
+
+  function open() {
+    if (dlg.open) return;
+    dlg.showModal();
+    input.value = '';
+    update();
+    loadPagefind();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const typing = (e.target as HTMLElement).closest('input, textarea, [contenteditable]');
+    if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || (e.key === '/' && !typing)) {
+      e.preventDefault();
+      open();
+    }
+  });
+  document.querySelectorAll('[data-open-palette]').forEach((b) => b.addEventListener('click', open));
+  input.addEventListener('input', update);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      active = (active + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % Math.max(items.length, 1);
+      highlight();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      run(items[active]);
+    }
+  });
+  list.addEventListener('click', (e) => {
+    const li = (e.target as HTMLElement).closest<HTMLElement>('[role=option]');
+    if (li) run(items[Number(li.dataset.i)]);
+  });
+  dlg.addEventListener('click', (e) => {
+    if (e.target === dlg) dlg.close();
+  });
+</script>
+
+<style>
+  .palette {
+    width: min(40rem, calc(100vw - 2rem)); max-height: min(34rem, 80vh);
+    margin: 12vh auto auto; padding: 0;
+    color: var(--fg); background: var(--bg-elev);
+    border: 1px solid var(--border); border-radius: calc(var(--radius) + 4px);
+    box-shadow: 0 24px 64px rgb(0 0 0 / 0.25);
+    overflow: hidden;
+  }
+  .palette[open] { display: flex; flex-direction: column; }
+  .palette::backdrop { background: rgb(0 0 0 / 0.35); backdrop-filter: blur(2px); }
+  .bar { display: flex; align-items: center; gap: 0.6rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--border); color: var(--fg-muted); }
+  .bar input { flex: 1; border: 0; outline: 0; background: transparent; color: var(--fg); font: inherit; font-size: 1.05rem; }
+  .bar kbd { font: 0.72rem var(--font-mono); border: 1px solid var(--border); border-radius: 3px; padding: 0.05rem 0.35rem; }
+  ul { list-style: none; margin: 0; padding: 0.4rem; overflow-y: auto; }
+  ul :global(li.group) { padding: 0.6rem 0.6rem 0.25rem; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); }
+  ul :global(li.group:empty) { display: none; }
+  ul :global(li.note) { padding: 1rem; color: var(--fg-muted); text-align: center; }
+  ul :global([role='option']) { padding: 0.5rem 0.7rem; border-radius: var(--radius); cursor: pointer; display: grid; gap: 0.15rem; }
+  ul :global([role='option'][aria-selected='true']) { background: var(--accent-soft); }
+  ul :global(.label) { font-weight: 550; }
+  ul :global(.sub) { font-size: 0.85rem; color: var(--fg-muted); font-family: var(--font-body); }
+  ul :global(mark) { background: var(--mark); color: inherit; }
+</style>
