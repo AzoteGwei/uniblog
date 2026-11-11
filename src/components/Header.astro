@@ -75,6 +75,8 @@ const nav = [
     );
   };
   document.addEventListener('click', (e) => {
+    const lang = (e.target as HTMLElement).closest<HTMLAnchorElement>('a[hreflang]');
+    if (lang?.closest('.menu')) localStorage.setItem('uniblog-locale', lang.hreflang.toLowerCase());
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-set-style],[data-set-theme]');
     if (!el) {
       document.querySelectorAll<HTMLDetailsElement>('.menu[open]').forEach((d) => {

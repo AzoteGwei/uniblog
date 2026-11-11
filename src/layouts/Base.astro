@@ -20,6 +20,8 @@ interface Props {
   description?: string;
   /** Language versions of this page; defaults to every locale home. */
   alternates?: Alternate[];
+  /** Language menu targets (may include fallback pages); defaults to alternates. */
+  languageLinks?: Alternate[];
   canonical?: string;
   noindex?: boolean;
   type?: 'website' | 'article';
@@ -27,6 +29,7 @@ interface Props {
 
 const { locale, title, description, canonical, noindex = false, type = 'website' } = Astro.props;
 const alternates: Alternate[] = Astro.props.alternates ?? LOCALES.map((l) => ({ locale: l, url: localeHome(l) }));
+const languageLinks = Astro.props.languageLinks ?? alternates;
 const site = siteTitle(locale);
 const fullTitle = title ? `${title} · ${site}` : site;
 const desc = description ?? siteDescription(locale);
@@ -69,7 +72,7 @@ const styles = cfg.theme.styles;
   </head>
   <body>
     <a class="sr-only" href="#main">Skip to content</a>
-    <Header locale={locale} alternates={alternates} />
+    <Header locale={locale} alternates={languageLinks} />
     <main id="main">
       <slot />
     </main>

@@ -27,6 +27,7 @@ const alternates = peers.filter((p) => p.status !== 'fallback');
   title={entry.data.title}
   description={entry.data.description ?? entry.data.summary}
   alternates={alternates}
+  languageLinks={peers}
   canonical={isFallback && source ? source.url : entryUrl(entry)}
   noindex={isFallback || entry.data.draft}
   type="article"
