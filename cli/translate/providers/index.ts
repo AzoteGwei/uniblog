@@ -1,5 +1,9 @@
 import type { ProviderRef, TranslationProvider } from '../types';
+import { anthropicProvider } from './anthropic';
+import { deeplProvider } from './deepl';
 import { geminiProvider } from './gemini';
+import { googleProvider } from './google';
+import { openaiProvider } from './openai';
 import { mockProvider } from './mock';
 
 type Factory = (ref: ProviderRef) => TranslationProvider;
@@ -7,6 +11,10 @@ type Factory = (ref: ProviderRef) => TranslationProvider;
 const registry: Record<string, Factory> = {
   mock: () => mockProvider(),
   gemini: geminiProvider,
+  anthropic: anthropicProvider,
+  openai: openaiProvider,
+  deepl: deeplProvider,
+  google: googleProvider,
 };
 
 export function registerProvider(id: string, f: Factory): void {
