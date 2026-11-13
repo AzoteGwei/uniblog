@@ -1,13 +1,13 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, relative } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import type { SiteConfig } from '../../src/lib/config';
 import { joinFrontmatter, TEXT_FIELDS } from '../../src/lib/frontmatter';
 import { hashOf, loadGlossary, relevantTerms, type GlossaryTerm } from '../../src/lib/glossary';
 import { isZh } from '../../src/lib/locales';
-import { loadLock, lockKey, saveLock, type Lock } from '../../src/lib/lock';
+import { loadLock, lockKey, updateLock } from '../../src/lib/lock';
 import { findTranslation, translationFile } from '../../src/lib/materialize';
 import { openccConverter } from '../../src/lib/opencc';
-import { discoverSources, translatableHash, wantedLocales, type SourceItem } from '../../src/lib/sources';
+import { COLLECTIONS, discoverSources, translatableHash, wantedLocales, type SourceItem } from '../../src/lib/sources';
 import { convertZhMarkdown, convertZhText } from '../../src/lib/wikiconv';
 import { PROMPT_VERSION } from './llm';
 import { headingCount, PlaceholderError, protect, restore } from './protect';
@@ -30,6 +30,38 @@ export interface PlanOptions {
   keys?: string[];
   locales?: string[];
   force?: boolean;
+}
+
+export interface Orphans {
+  /** Translation files (repo-relative) whose source post/page no longer exists. */
+  files: string[];
+  /** Lock ids (`collection/key`) whose source no longer exists. */
+  lockIds: string[];
+}
+
+/** Leftovers of deleted or renamed sources: translation files and lock entries. */
+export function findOrphans(cfg: SiteConfig, root: string): Orphans {
+  const live = new Set(discoverSources(cfg, root).map((i) => lockKey(i.collection, i.key)));
+  const files: string[] = [];
+  const base = resolve(root, 'i18n/translations');
+  if (existsSync(base))
+    for (const loc of readdirSync(base))
+      for (const col of COLLECTIONS) {
+        const dir = join(base, loc, col);
+        if (!existsSync(dir)) continue;
+        for (const f of readdirSync(dir))
+          if (/\.mdx?$/.test(f) && !live.has(lockKey(col, f.replace(/\.mdx?$/, '')))) files.push(relative(root, join(dir, f)));
+      }
+  const lockIds = Object.keys(loadLock(root).entries).filter((id) => !live.has(id));
+  return { files: files.sort(), lockIds };
+}
+
+/** Delete orphaned translation files and lock entries (they stay recoverable from Git). */
+export function pruneOrphans(cfg: SiteConfig, root: string): Orphans {
+  const o = findOrphans(cfg, root);
+  for (const f of o.files) rmSync(resolve(root, f));
+  if (o.lockIds.length) updateLock(root, (lock) => o.lockIds.forEach((id) => delete lock.entries[id]));
+  return o;
 }
 
 /** Locales that need an engine translation (zh siblings are derived with OpenCC instead). */
@@ -136,7 +168,6 @@ export async function runJobs(cfg: SiteConfig, root: string, jobs: PlannedJob[],
     if (p instanceof Error) throw p;
     return p;
   };
-  const lock: Lock = loadLock(root);
   const retries = opts.retries ?? 2;
   const queue = [...jobs];
 
@@ -171,20 +202,23 @@ export async function runJobs(cfg: SiteConfig, root: string, jobs: PlannedJob[],
         if (body === undefined) throw lastErr;
         const file = translationFile(cfg, root, item, locale, item.primary.ext);
         const content = joinFrontmatter(fields, body.endsWith('\n') ? body : body + '\n');
+        // Lock entry first: if we die before the file is written, the next run sees
+        // "missing" and retranslates, instead of a lockless file that is skipped as hand-placed.
+        const id = lockKey(item.collection, item.key);
+        updateLock(root, (lock) => {
+          lock.entries[id] ??= {};
+          lock.entries[id][locale] = {
+            sourceHash: translatableHash(item.primary),
+            glossaryHash: hashOf(job.glossary),
+            promptVersion: PROMPT_VERSION,
+            provider: provider.id,
+            model: provider.model,
+            translatedAt: new Date().toISOString(),
+            outputHash: hashOf(content),
+          };
+        });
         mkdirSync(dirname(file), { recursive: true });
         writeFileSync(file, content);
-        const id = lockKey(item.collection, item.key);
-        lock.entries[id] ??= {};
-        lock.entries[id][locale] = {
-          sourceHash: translatableHash(item.primary),
-          glossaryHash: hashOf(job.glossary),
-          promptVersion: PROMPT_VERSION,
-          provider: provider.id,
-          model: provider.model,
-          translatedAt: new Date().toISOString(),
-          outputHash: hashOf(content),
-        };
-        saveLock(lock, root);
         result.done.push({ job: pj, file: relative(root, file), provider: provider.id });
         log(`✓ ${label} (${provider.id}${provider.model ? `/${provider.model}` : ''})`);
       } catch (e) {
