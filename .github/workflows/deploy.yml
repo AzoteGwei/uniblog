@@ -1,0 +1,90 @@
+# Build and deploy to Cloudflare Pages (Direct Upload via wrangler).
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   required to deploy; without them the deploy step is skipped
+#   OPENAI_API_KEY / GEMINI_API_KEY / ANTHROPIC_API_KEY / DEEPL_API_KEY / GOOGLE_TRANSLATE_API_KEY
+#                                                 optional; enables CI translation on pushes
+#   OPENAI_BASE_URL                               optional, for OpenAI-compatible endpoints
+# Variables:
+#   UNIBLOG_CI_TRANSLATE=false                    disable CI translation even when a key is present
+#
+# On push: translate missing/stale items, commit them back as github-actions[bot], then deploy.
+# On pull_request: no translation, no commits; deploys a preview branch (same-repo PRs only).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.head_ref || github.ref_name }}
+      HAS_CF: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+      HAS_TRANSLATOR: ${{ secrets.OPENAI_API_KEY != '' || secrets.GEMINI_API_KEY != '' || secrets.ANTHROPIC_API_KEY != '' || secrets.DEEPL_API_KEY != '' || secrets.GOOGLE_TRANSLATE_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Translate missing / stale items
+        id: translate
+        if: github.event_name != 'pull_request' && vars.UNIBLOG_CI_TRANSLATE != 'false' && env.HAS_TRANSLATOR == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+          GOOGLE_TRANSLATE_API_KEY: ${{ secrets.GOOGLE_TRANSLATE_API_KEY }}
+        run: pnpm i18n || echo "::warning::some translations failed; those pages fall back to the source text"
+
+      - name: Commit translations
+        if: steps.translate.outcome == 'success'
+        run: |
+          git add i18n
+          if git diff --cached --quiet; then echo "no translation changes"; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m '🌐 update translations [skip ci]'
+          # Never resolve i18n/state.lock.yaml conflicts automatically: a wrong merge drops entries
+          # and leaves "hand-placed" translations. On conflict, skip; the next push retries.
+          if ! git pull --rebase origin "$BRANCH"; then
+            git rebase --abort
+            echo "::warning::$BRANCH moved and conflicts with the translation commit; not pushing (next run will retry)"
+            exit 0
+          fi
+          git push origin "HEAD:$BRANCH"
+
+      - run: pnpm test
+
+      - name: Translation status
+        run: pnpm i18n:status
+
+      - name: Build and deploy
+        if: env.HAS_CF == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm ship --branch "$BRANCH"
+
+      - name: Build only (no Cloudflare credentials)
+        if: env.HAS_CF != 'true'
+        run: pnpm build

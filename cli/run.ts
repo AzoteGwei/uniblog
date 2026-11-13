@@ -19,3 +19,16 @@ export function runBin(bin: string, args: string[], env: NodeJS.ProcessEnv = {})
     });
   });
 }
+
+/** Run a locally installed binary and capture its stdout (stderr is inherited). */
+export function captureBin(bin: string, args: string[]): Promise<{ code: number; stdout: string }> {
+  const local = resolve('node_modules/.bin', bin);
+  const cmd = existsSync(local) ? local : bin;
+  return new Promise((ok, fail) => {
+    const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'inherit'] });
+    let stdout = '';
+    child.stdout.setEncoding('utf8').on('data', (d: string) => (stdout += d));
+    child.on('error', fail);
+    child.on('exit', (code) => ok({ code: code ?? 1, stdout }));
+  });
+}

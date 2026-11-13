@@ -40,13 +40,17 @@ export const siteSchema = z
       }),
     theme: z
       .object({
-        style: z.string().default('paper'),
+        style: z.string().default('ink'),
         styles: z.array(z.string()).default(['paper']),
         compare: z.boolean().default(true),
       })
-      .default({ style: 'paper', styles: ['paper'], compare: true }),
+      .default({ style: 'ink', styles: ['ink'], compare: true }),
     deploy: z
-      .object({ provider: z.literal('cloudflare-pages'), project: z.string() })
+      .object({
+        provider: z.literal('cloudflare-pages'),
+        project: z.string(),
+        productionBranch: z.string().default('main'),
+      })
       .optional(),
     contentLicense: z
       .object({ name: z.string(), url: z.url() })
