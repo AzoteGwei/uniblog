@@ -19,18 +19,19 @@ locales:
 
 translate:
   zhPivot: zh-Hans
-  default: { provider: openai, model: deepseek-flash }
+  default: { provider: openai, model: deepseek-flash, options: { baseURL: https://api.deepseek.com } }
   overrides: {}
   onBuild: stale # stale | none
 
 theme:
-  style: paper
+  style: ink
   styles: [paper, slate, ink, terminal]
   compare: true
 
 deploy:
   provider: cloudflare-pages
   project: uniblog
+  productionBranch: main
 
 contentLicense:
   name: CC BY 4.0
