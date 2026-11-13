@@ -1,5 +1,5 @@
 ---
-import { cfg, localeHome, siteTitle } from '../lib/content';
+import { allEntries, cfg, entryUrl, localeHome, siteTitle } from '../lib/content';
 import { t } from '../lib/ui';
 import type { Alternate } from '../layouts/Base.astro';
 
@@ -15,12 +15,17 @@ const langs = Object.entries(cfg.locales).map(([code, l]) => ({
   url: alternates.find((a) => a.locale === code)?.url ?? localeHome(code),
 }));
 const path = Astro.url.pathname;
-const nav = [
+// Pages opt into the nav with `menu: <weight>` in front matter (lower first).
+const menuPages = (await allEntries('pages'))
+  .filter((e) => e.data.uniblog.locale === locale && e.data.menu != null)
+  .sort((a, b) => a.data.menu! - b.data.menu!);
+const nav = ([
   { href: home, label: t(locale, 'nav.posts'), active: path === home },
   { href: `${home}archive/`, label: t(locale, 'nav.archive') },
   { href: `${home}tags/`, label: t(locale, 'nav.tags') },
   { href: `${home}categories/`, label: t(locale, 'nav.categories') },
-].map((n) => ({ ...n, active: n.active ?? path.startsWith(n.href) }));
+  ...menuPages.map((e) => ({ href: entryUrl(e), label: e.data.title })),
+] as { href: string; label: string; active?: boolean }[]).map((n) => ({ ...n, active: n.active ?? path.startsWith(n.href) }));
 ---
 <header class="site-header ui">
   <div class="inner">

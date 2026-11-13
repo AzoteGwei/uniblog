@@ -34,6 +34,7 @@ export const sourceFrontmatter = z
     translate: z.union([z.boolean(), z.array(z.string())]).default(true),
     glossary: z.array(z.record(z.string(), z.union([z.string(), z.boolean()]))).optional(),
     reviewed: z.boolean().optional(),
+    menu: z.number().optional(),
   });
 
 export type SourceFrontmatter = z.infer<typeof sourceFrontmatter>;

@@ -25,6 +25,7 @@ const schema = z.object({
   description: z.string().optional(),
   cover: z.string().optional(),
   reviewed: z.boolean().optional(),
+  menu: z.number().optional(),
   uniblog,
 });
 
