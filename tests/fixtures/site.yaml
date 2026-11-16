@@ -1,0 +1,16 @@
+# Fixed site config for unit tests. Independent of the repository's own site.yaml,
+# so editing that file (locales, provider, labels…) never breaks `pnpm test`.
+title: { zh-Hans: test }
+author: test
+url: https://example.com
+defaultLocale: zh-Hans
+
+locales:
+  zh-Hans: { path: zh-hans, label: 简体中文 }
+  zh-Hant: { path: zh-hant, label: 繁體中文, derive: { from: zh-Hans, opencc: s2twp } }
+  en-US: { path: en-us, label: English }
+  ja: { path: ja, label: 日本語 }
+
+translate:
+  zhPivot: zh-Hans
+  default: { provider: mock }

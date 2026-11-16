@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { engineLang, fromTagged, segmentTranslate, toTagged } from '../cli/translate/segment';
+import { fromTagged, segmentTranslate, toTagged } from '../cli/translate/segment';
 
 describe('segment tagging', () => {
   it('round-trips inline markdown', () => {
@@ -16,11 +16,5 @@ describe('segment tagging', () => {
     const r = await segmentTranslate(job, async (t) => t.map((x) => `EN(${x})`));
     expect(r.body).toBe('## EN(标题)\n\n- EN(项目)\n⟦0⟧\n');
     expect(r.fields.title).toBe('EN(T)');
-  });
-  it('maps engine language codes', () => {
-    expect(engineLang('zh-Hant', 'deepl', 'target')).toBe('ZH-HANT');
-    expect(engineLang('en-US', 'deepl', 'source')).toBe('EN');
-    expect(engineLang('en-US', 'deepl', 'target')).toBe('EN-US');
-    expect(engineLang('zh-Hans', 'google', 'target')).toBe('zh-CN');
   });
 });

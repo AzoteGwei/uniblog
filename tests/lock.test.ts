@@ -2,11 +2,10 @@ import { existsSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { findOrphans, planJobs, pruneOrphans, runJobs } from '../cli/translate';
-import { loadSiteConfig } from '../src/lib/config';
 import { loadLock } from '../src/lib/lock';
-import { makeSite } from './helpers';
+import { fixtureConfig, makeSite } from './helpers';
 
-const cfg = loadSiteConfig(process.cwd(), true);
+const cfg = fixtureConfig;
 
 describe('lock under overlapping runs', () => {
   it('keeps entries written by a concurrent run (e.g. dev toolbar + pnpm i18n)', async () => {

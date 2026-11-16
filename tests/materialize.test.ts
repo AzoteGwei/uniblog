@@ -1,15 +1,14 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { loadSiteConfig } from '../src/lib/config';
 import { splitFrontmatter } from '../src/lib/frontmatter';
 import { hashOf } from '../src/lib/glossary';
 import { saveLock } from '../src/lib/lock';
 import { materialize } from '../src/lib/materialize';
 import { readDoc, translatableHash } from '../src/lib/sources';
-import { makeSite } from './helpers';
+import { fixtureConfig, makeSite } from './helpers';
 
-const cfg = loadSiteConfig();
+const cfg = fixtureConfig;
 
 function out(root: string, p: string) {
   return splitFrontmatter(readFileSync(join(root, '.uniblog/content', p), 'utf8'));

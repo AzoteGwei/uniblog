@@ -2,32 +2,30 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { planJobs, runJobs, translationTargets } from '../cli/translate';
-import { loadSiteConfig, parseSiteConfig } from '../src/lib/config';
 import { splitFrontmatter } from '../src/lib/frontmatter';
 import { openccPreset } from '../src/lib/locales';
 import { materialize } from '../src/lib/materialize';
 import { discoverSources } from '../src/lib/sources';
-import { makeSite } from './helpers';
+import { editSite, fixtureConfig, makeSite } from './helpers';
 
-const cfg = loadSiteConfig();
+const cfg = fixtureConfig;
 const read = (root: string, p: string) => splitFrontmatter(readFileSync(join(root, '.uniblog/content', p), 'utf8'));
 
-/** site.yaml with Traditional Chinese as the primary variant. */
-function hantFirst(root: string, zhHans: string) {
-  const yaml = readFileSync(join(root, 'site.yaml'), 'utf8')
-    .replace(/defaultLocale: zh-Hans/, 'defaultLocale: zh-Hant')
-    .replace(/  zh-Hans: \{ path: zh-hans, label: 简体中文 \}/, `  zh-Hans: ${zhHans}`)
-    .replace(/  zh-Hant: \{[^\n]*\}/, '  zh-Hant: { path: zh-hant, label: 繁體中文 }')
-    .replace(/zhPivot: zh-Hans/, 'zhPivot: zh-Hant');
-  writeFileSync(join(root, 'site.yaml'), yaml);
-  return parseSiteConfig(yaml);
+/** site.yaml with Traditional Chinese as the primary variant; `opencc` sets an explicit zh-Hans derive preset. */
+function hantFirst(root: string, opencc?: string) {
+  return editSite(root, (s) => {
+    s.defaultLocale = 'zh-Hant';
+    s.translate.zhPivot = 'zh-Hant';
+    delete s.locales['zh-Hant'].derive;
+    if (opencc) s.locales['zh-Hans'].derive = { from: 'zh-Hant', opencc };
+  });
 }
 
 describe('Traditional Chinese source', () => {
   it('picks tw2sp by default and honours an explicit derive preset', () => {
     expect(openccPreset(cfg, 'zh-Hant', 'zh-Hans')).toBe('tw2sp');
     const root = makeSite({});
-    const c = hantFirst(root, '{ path: zh-hans, label: 简体中文, derive: { from: zh-Hant, opencc: tw2s } }');
+    const c = hantFirst(root, 'tw2s');
     expect(openccPreset(c, 'zh-Hant', 'zh-Hans')).toBe('tw2s');
   });
 
@@ -48,14 +46,14 @@ describe('Traditional Chinese source', () => {
 
   it('uses character-only tw2s when configured', () => {
     const root = makeSite({ 'content/posts/t/index.md': '---\ntitle: 記憶體\ndate: 2026-01-01\nlang: zh-Hant\n---\n\n軟體\n' });
-    const c = hantFirst(root, '{ path: zh-hans, label: 简体中文, derive: { from: zh-Hant, opencc: tw2s } }');
+    const c = hantFirst(root, 'tw2s');
     materialize(c, root);
     expect(read(root, 'zh-hans/posts/t/index.md').data.title).toBe('记忆体');
   });
 
   it('translates non-zh sources into a zh-Hant pivot and derives zh-Hans', async () => {
     const root = makeSite({ 'content/posts/j/index.md': '---\ntitle: 日本語\ndate: 2026-01-01\nlang: ja\n---\n\n本文\n' });
-    const c = hantFirst(root, '{ path: zh-hans, label: 简体中文 }');
+    const c = hantFirst(root);
     expect(translationTargets(c, discoverSources(c, root)[0]!)).toEqual(['zh-Hant', 'en-US']);
     const zhHantSource = discoverSources(c, root);
     expect(translationTargets(c, { ...zhHantSource[0]!, lang: 'zh-Hant' })).toEqual(['en-US', 'ja']);
@@ -78,7 +76,7 @@ describe('UI strings for a Traditional-first site', () => {
       'i18n/ui/en-US.yaml': 'nav.archive: Archive\npost.published: Published\n',
       'i18n/ui/zh-Hant.yaml': 'nav.archive: 歸檔\npost.published: 發佈於\n',
     });
-    hantFirst(root, '{ path: zh-hans, label: 简体中文 }');
+    hantFirst(root);
     process.chdir(root);
     vi.resetModules();
     const { t } = await import('../src/lib/ui');
