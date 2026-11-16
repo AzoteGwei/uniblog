@@ -3,18 +3,18 @@ version: 1
 entries:
   pages/about:
     en-US:
-      sourceHash: sha256:8e517a7128693f84
+      sourceHash: sha256:8b5dd45c2868a549
       glossaryHash: sha256:b9e0562992edc7cb
       promptVersion: 1
       provider: openai
       model: deepseek-flash
       translatedAt: 2026-11-11T13:59:33.158Z
-      outputHash: sha256:b4ff93cf2bbd0741
+      outputHash: sha256:0ecb3d591f1ee1f2
     ja:
-      sourceHash: sha256:8e517a7128693f84
+      sourceHash: sha256:8b5dd45c2868a549
       glossaryHash: sha256:b9e0562992edc7cb
       promptVersion: 1
       provider: openai
       model: deepseek-flash
       translatedAt: 2026-11-11T13:59:34.820Z
-      outputHash: sha256:ffaef463f3357562
+      outputHash: sha256:44047ca0009f6b89

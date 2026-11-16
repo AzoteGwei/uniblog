@@ -4,79 +4,96 @@ date: 2026-11-13T00:00:00Z
 lang: zh-Hans
 tags: [meta, i18n]
 categories: [notes]
-summary: 欢迎使用 uniblog。这是第一篇示例文章，演示写作方式、短代码和繁简转换；读完就可以删掉它。
+summary: 欢迎使用 uniblog。本文简要介绍文章创建、扩展语法与繁简转换的用法，阅读后可直接删除。
 ---
 
-欢迎使用 uniblog！这是一篇示例文章。源文章放在 `content/` 目录里，机器翻译的结果放在 `i18n/translations/`，两者都进入 Git。
+欢迎使用 uniblog。本文是默认生成的示例文章，用于演示写作流程、扩展语法与繁简转换。
 
-:::tip[读完就删]
-删除 `content/posts/hello-world/` 这个目录，然后运行 `pnpm i18n` 清理即可开始写自己的博客。
-:::
+源文章存放在 `content/` 目录下，生成的译文存放在 `i18n/translations/`，两者均纳入 Git 版本控制。如需移除本文，删除 `content/posts/hello-world/` 目录并运行 `pnpm i18n` 即可。
 
-## 写一篇新文章
+## 快速开始
 
-和 Hugo、Hexo 一样，每篇文章是一个目录（page bundle），图片放在同一个目录下。
+每篇文章默认采用目录结构（Page Bundle），正文为 `index.md`，同目录下的图片等资源会随文章一起打包。
 
 :::steps
-### 创建文章
+### 创建新文章
 
 ```bash
-pnpm new my-post --title "我的文章"
+pnpm new my-post --title "我的新文章"
 ```
 
-### 本地预览
+生成的文章位于 `content/posts/my-post/index.md`，默认带有 `draft: true`。
 
-运行 `pnpm dev`，在浏览器里打开 `http://localhost:4321`。新文章默认是草稿（`draft: true`），只在本地显示。
+### 启动本地预览
 
-### 翻译并发布
+```bash
+pnpm dev
+```
 
-运行 `pnpm i18n` 生成其他语言的版本，把 `draft` 改成 `false`，然后提交并推送到 GitHub。
+在浏览器访问 `http://localhost:4321` 即可预览（包含草稿文章）。
+
+### 翻译与发布
+
+```bash
+pnpm i18n
+```
+
+将 front matter 中的 `draft: true` 删除或改为 `false`，提交代码并推送到 GitHub。若在 CI 中配置了翻译密钥，也可直接推送，由 GitHub Actions 自动执行翻译与部署。
 :::
 
-## 短代码
+## 扩展语法
 
-用 Markdown 指令语法实现 Hugo 式短代码，普通段落里的 16:9 不会被误认为指令。
+支持基于 `remark-directive` 的块级与行内指令（普通正文中的 `16:9` 等冒号不受影响）。
+
+提示框支持 `note`、`tip`、`info`、`warning`、`danger`：
 
 :::note
-这是一个注意事项。
+省略标题时，使用当前语言的默认标题。
 :::
 
 :::warning[自定义标题]
-小心**内存**泄漏。
+排查问题时注意连接池与**内存**占用。
 :::
 
-:::details[点击展开]
-隐藏的内容。
+折叠块与选项卡：
+
+:::details[查看目录说明]
+构建时，源文章与各语言译文会生成至 `.uniblog/` 目录，随后由 Astro 构建静态页面并生成 Pagefind 搜索索引。
 :::
 
 ::::tabs
 :::tab[pnpm]
 ```bash
-pnpm add astro
+pnpm i18n
+pnpm build
 ```
 :::
-:::tab[npm]
+:::tab[tsx]
 ```bash
-npm i astro
+pnpm exec tsx cli/index.ts status
 ```
 :::
 ::::
 
-## 图片
+## 图片引用
 
-图片和文章放在同一个目录，构建时会自动优化。
+将图片放在文章同目录下，使用相对路径引用，构建时会自动转换为 WebP 格式：
 
-::figure[页面包里的图片]{src="./cover.png"}
+::figure[同目录下的示例图片（图注随正文一起翻译）]{src="./cover.png"}
 
 ## 繁简转换
 
-简体源文会通过 OpenCC 自动生成繁体版本，比如“博客”“软件”“内存”“鼠标”会被转换成台湾用语。
-也可以手动指定：-{zh-hans:服务器;zh-hant:伺服器主機;}-，或者用 -{不转换}- 保持原样。
+简体原文在构建时通过 OpenCC（`s2twp`）自动生成繁体页面，“博客”、“软件”、“内存”、“鼠标”等词汇会转换为台湾常用词。
 
-### 代码不会被转换
+如需手动指定转换规则，可使用维基百科风格的转换语法：
 
-`内存` 这样的行内代码以及代码块里的中文都会保持原样。
+- 按简繁分别指定：`-{zh-hans:服务器;zh-hant:伺服器主機;}-`（渲染结果：-{zh-hans:服务器;zh-hant:伺服器主機;}-）
+- 保持原样不转换：`-{不转换文本}-`（渲染结果：-{不转换文本}-）
 
-## 授权
+### 代码保护
 
-内容采用 CC BY 4.0 授权，代码采用 MIT 授权。
+行内代码（如 `内存`）、代码块及链接地址在繁简转换与机器翻译时均保持原样。
+
+## 许可协议
+
+代码采用 MIT 协议，文章内容与译文默认采用 CC BY 4.0 协议。

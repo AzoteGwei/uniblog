@@ -5,6 +5,6 @@ lang: zh-Hans
 menu: 10
 ---
 
-在这里介绍你自己和这个博客。
+在此处填写关于你或本博客的介绍。
 
-这个页面位于 `content/pages/about/index.md`。front matter 里的 `menu: 10` 让它出现在顶部导航中；数字越小越靠前。在 `content/pages/` 下新建目录即可添加更多独立页面（`pnpm new <slug> --page`）。
+本页面位于 `content/pages/about/index.md`。front matter 中的 `menu: 10` 用于将该页面加入顶部导航栏（数值越小越靠左）。运行 `pnpm new <slug> --page` 可在 `content/pages/` 下创建更多独立页面。

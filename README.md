@@ -1,26 +1,28 @@
 # uniblog
 
-本地優先的多語博客模板：Astro 7 + pnpm，開箱部署到 Cloudflare Pages。
+English | [简体中文](./README.zh-Hans.md) | [繁體中文](./README.zh-Hant.md)
 
-- 源文可用任何語言撰寫，其餘語言由可插拔的翻譯引擎（DeepSeek / OpenAI 兼容、Gemini、Claude、DeepL、Google）生成，**譯文進 Git**，可以手改、校對。
-- 繁簡由 OpenCC 在建置期派生，支持維基式 `-{…}-` 手動轉換。
-- GitHub Actions 自動翻譯、把譯文提交回倉庫、部署到 Cloudflare Pages；PR 自動生成預覽站。
-- 四種主題風格 × 明暗模式、命令面板全文搜索（Pagefind）、雙語對照閱讀、每語 RSS / sitemap / hreflang。
+A multilingual blog template built with Astro 7 and pnpm, configured for Cloudflare Pages.
 
-授權：
+- Posts can be written in any language and translated via pluggable providers (DeepSeek / OpenAI-compatible APIs, Gemini, Claude, DeepL, Google Translate). Translations are stored in `i18n/translations/` and tracked in Git for manual review and editing.
+- Simplified and Traditional Chinese variants are generated at build time via OpenCC, with support for inline `-{…}-` conversion rules and custom glossaries.
+- GitHub Actions translates new content, commits translations back to the repository, and deploys to Cloudflare Pages. Pull requests build preview deployments.
+- Four built-in styles (`paper`, `slate`, `ink`, `terminal`) with light/dark mode, full-text search via Pagefind (`/` or `⌘K`), side-by-side bilingual comparison, and per-locale RSS feeds, sitemaps, and `hreflang` tags.
 
-- 代碼：MIT（`LICENSE`）。主題為 clean-room 實現，僅參考 [pgsty/oink](https://github.com/pgsty/oink) 的視覺方向，未使用其代碼。
-- 內容與譯文：CC BY 4.0（`content/LICENSE`，範圍見 `REUSE.toml`）。
+**License**
+
+- **Code**: MIT ([`LICENSE`](./LICENSE)). Clean-room theme implementation inspired by the visual style of [pgsty/oink](https://github.com/pgsty/oink); no code is shared.
+- **Content & translations**: CC BY 4.0 ([`content/LICENSE`](./content/LICENSE); see [`REUSE.toml`](./REUSE.toml) for file scope).
 
 ---
 
-## 從模板開始
+## Quick Start
 
-需要：Node.js ≥ 22.12、pnpm（`corepack enable` 即可，版本由 `package.json` 的 `packageManager` 指定）、一個 GitHub 帳號；部署需要 Cloudflare 帳號（免費方案即可）。
+**Requirements**: Node.js ≥ 22.12, pnpm (enable via `corepack enable`; version is pinned in `package.json`), a GitHub account, and a Cloudflare account.
 
-### 1. 建立自己的倉庫
+### 1. Create a Repository
 
-在 GitHub 上點 **Use this template → Create a new repository**，然後：
+On GitHub, click **Use this template → Create a new repository**, then clone it:
 
 ```bash
 git clone https://github.com/<you>/<your-blog>.git
@@ -28,274 +30,282 @@ cd <your-blog>
 pnpm install
 ```
 
-第一次 push 時 Actions 就會運行；在配置 Cloudflare 之前它只建置、不部署，不會報錯。
+GitHub Actions runs on the first push. Before Cloudflare credentials are configured, the workflow only runs the build and tests and skips deployment.
 
-### 2. 修改站點配置 `site.yaml`
+### 2. Configure `site.yaml`
 
-| 欄位 | 說明 |
+| Field | Description |
 | --- | --- |
-| `title` / `description` | 各語言的站名與簡介；缺少的語言回退到 `defaultLocale` |
-| `author` | 頁腳版權署名 |
-| `url` | **正式域名**（canonical、sitemap、RSS、hreflang 都依賴它）。還沒有域名就先填 `https://<project>.pages.dev` |
-| `defaultLocale` / `locales` | 語言列表與 URL 路徑；以繁體為主見[繁簡轉換](#繁簡轉換) |
-| `translate.default` | 翻譯引擎，默認 DeepSeek（OpenAI 兼容接口），見[翻譯](#翻譯) |
-| `theme.style` | 默認風格：`paper` / `slate` / `ink` / `terminal`（默認 `ink`） |
-| `deploy.project` | Cloudflare Pages 項目名，首次部署時自動創建 |
-| `deploy.productionBranch` | 生產分支，默認 `main` |
-| `contentLicense` | 文章授權，顯示在頁腳 |
+| `title` / `description` | Site title and description per locale. Missing locales fall back to `defaultLocale`. |
+| `author` | Copyright author shown in the footer. |
+| `url` | Production site URL (used for canonical URLs, sitemap, RSS, and `hreflang`). Use `https://<project>.pages.dev` before setting up a custom domain. |
+| `defaultLocale` / `locales` | Enabled locales and URL path prefixes. See [Chinese Variant Conversion](#chinese-variant-conversion) to use Traditional Chinese as the default. |
+| `translate.default` | Default translation provider (defaults to DeepSeek via an OpenAI-compatible endpoint). See [Translation](#translation). |
+| `theme.style` | Default style: `paper`, `slate`, `ink`, or `terminal` (default: `ink`). |
+| `deploy.project` | Cloudflare Pages project name (created on first deploy if it does not exist). |
+| `deploy.productionBranch` | Production branch (default: `main`). |
+| `contentLicense` | Content license shown in the footer. |
 
-### 3. 換成自己的內容
+### 3. Replace Sample Content
 
-- `content/posts/hello-world/`：示例文章，演示寫作方式、短代碼和繁簡轉換。看完直接刪掉整個目錄。
-- `content/pages/about/index.md`：關於頁，改成自己的介紹。
-- `i18n/taxonomy.yaml`：tag / category 的各語顯示名；`i18n/glossary.yaml`：術語表。
-- `LICENSE`、`REUSE.toml` 裡的版權人 `Azote` 改成你自己；如果文章不想用 CC BY 4.0，同時改 `content/LICENSE`、`REUSE.toml` 和 `site.yaml` 的 `contentLicense`。
+- `content/posts/hello-world/`: Sample post demonstrating directory structure, shortcodes, and Chinese conversion. Delete the directory when no longer needed.
+- `content/pages/about/index.md`: About page.
+- `i18n/taxonomy.yaml`: Localized display names for tags and categories.
+- `i18n/glossary.yaml`: Translation glossary and OpenCC custom terms.
+- Update the copyright holder `Azote` in `LICENSE` and `REUSE.toml`. To use a different content license, update `content/LICENSE`, `REUSE.toml`, and `contentLicense` in `site.yaml`.
 
-刪除或改名文章後運行一次 `pnpm i18n`，它會順帶清理舊文章留下的譯文和 lock 條目。
+After deleting or renaming a post, run `pnpm i18n` to remove obsolete translation files and lock entries.
 
-### 4. 配置翻譯引擎（本地）
+### 4. Local Translation
 
 ```bash
-cp .env.example .env     # 填入 OPENAI_API_KEY（默認引擎 DeepSeek 的 key）
-pnpm i18n                # 翻譯所有缺失 / 過期的文章
-pnpm dev                 # http://localhost:4321
+cp .env.example .env     # Set OPENAI_API_KEY (for the default DeepSeek provider)
+pnpm i18n                # Translate missing or outdated posts
+pnpm dev                 # Start dev server at http://localhost:4321
 ```
 
-不想用 DeepSeek，就改 `site.yaml` 的 `translate.default` 並在 `.env` 填對應的 key。完全不配置也能用：未翻譯的語言會顯示源文並帶提示橫幅。
+To use another provider, update `translate.default` in `site.yaml` and set the corresponding API key in `.env`. Without an API key, untranslated pages fall back to the source language and display a notice banner.
 
-### 5. 部署到 Cloudflare Pages
+### 5. Deploy to Cloudflare Pages
 
-1. **建立 API Token**：Cloudflare 控制台 → My Profile → API Tokens → Create Token → Create Custom Token，權限選 **Account · Cloudflare Pages · Edit**，Account Resources 選你的帳號。
-2. **找到 Account ID**：控制台 Workers & Pages 頁面右側欄，或本地運行 `pnpm exec wrangler whoami`。
-3. **添加 GitHub Secrets**：倉庫 Settings → Secrets and variables → Actions → New repository secret：
+1. **Create an API Token**: In the Cloudflare dashboard, go to **My Profile → API Tokens → Create Token → Create Custom Token**. Select **Account · Cloudflare Pages · Edit** and scope **Account Resources** to your account.
+2. **Find your Account ID**: Copy it from the right sidebar of **Workers & Pages** in the dashboard, or run `pnpm exec wrangler whoami`.
+3. **Add GitHub Secrets**: In your repository, go to **Settings → Secrets and variables → Actions → New repository secret**:
 
-   | Secret | 必需 | 說明 |
+   | Secret | Required | Description |
    | --- | --- | --- |
-   | `CLOUDFLARE_API_TOKEN` | 是 | 第 1 步的 token |
-   | `CLOUDFLARE_ACCOUNT_ID` | 是 | 第 2 步的 ID |
-   | `OPENAI_API_KEY` | 否 | 配置後 CI 會自動翻譯並提交譯文；其他引擎用對應名字（`GEMINI_API_KEY`、`ANTHROPIC_API_KEY`、`DEEPL_API_KEY`、`GOOGLE_TRANSLATE_API_KEY`） |
+   | `CLOUDFLARE_API_TOKEN` | Yes | Token created in Step 1. |
+   | `CLOUDFLARE_ACCOUNT_ID` | Yes | Account ID from Step 2. |
+   | `OPENAI_API_KEY` | No | If set, CI translates new posts and commits translations back. Other providers use `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPL_API_KEY`, or `GOOGLE_TRANSLATE_API_KEY`. |
 
-4. push 到 `main`。Actions 頁面的 deploy 任務結束後，日誌裡會給出 `https://<project>.pages.dev` 地址（名稱被佔用時 Cloudflare 會加後綴，以日誌為準）。
+4. Push to `main`. After the `deploy` job finishes, the deployment URL (`https://<project>.pages.dev`) is printed in the workflow logs.
 
-詳細行為與自定義域名見[部署](#部署)。
+See [Deployment](#deployment) for custom domains and CI options.
 
-### 6. 日常寫作
+### 6. Writing Posts
 
 ```bash
-pnpm new my-post --title "我的文章"    # 建立草稿 content/posts/my-post/index.md
-pnpm dev                               # 邊寫邊看
-# 寫完把 draft: true 刪掉或改成 false
+pnpm new my-post --title "Post Title"    # Create content/posts/my-post/index.md
+pnpm dev                                 # Preview at http://localhost:4321
+# Remove `draft: true` (or set it to false) before publishing
 git add . && git commit -m "new post" && git push
 ```
 
-配置了翻譯 key 的話，CI 會翻譯、提交譯文、部署；也可以 push 前在本地 `pnpm i18n`，翻完自己檢查一遍再提交。
+When a translation API key is configured in CI, pushing to `main` translates the post, commits the output, and deploys. You can also run `pnpm i18n` locally and review the files under `i18n/translations/` before committing.
 
 ---
 
-## 命令
+## Commands
 
 ```bash
-pnpm new <slug> [--title …] [--lang ja] [--page] [--mdx] [--single]   # 新文章 / 頁面（默認草稿）
-pnpm dev                       # 本地預覽；不自動翻譯，只提示缺失 / 過期
-pnpm i18n [slug…] [-l en-US] [-p <engine>] [--force] [--dry-run]       # 翻譯缺失 / 過期的文章，清理孤兒譯文
-pnpm i18n:status [--check]     # 翻譯狀態矩陣；--check 在有 stale / fallback 時返回非零
-pnpm build [--strict]          # 補翻（僅本地）→ astro build → pagefind；--strict 有 stale / fallback 時失敗
-pnpm ship [--branch <name>]    # build 後部署到 Cloudflare Pages
-pnpm preview                   # 預覽 dist/
+pnpm new <slug> [--title …] [--lang ja] [--page] [--mdx] [--single]   # Create a post or page (draft by default)
+pnpm dev                       # Start local dev server (does not run automatic translation)
+pnpm i18n [slug…] [-l en-US] [-p <engine>] [--force] [--dry-run]       # Translate missing/outdated posts and clean up removed posts
+pnpm i18n:status [--check]     # Show translation status table (--check exits non-zero on stale/fallback)
+pnpm build [--strict]          # Translate missing (local only) → astro build → pagefind (--strict fails on stale/fallback)
+pnpm ship [--branch <name>]    # Build and deploy to Cloudflare Pages
+pnpm preview                   # Preview dist/ locally
 ```
 
-> `pnpm publish` / `pnpm deploy` 是 pnpm 內建命令，所以發佈命令叫 `pnpm ship`。
+> `pnpm publish` and `pnpm deploy` are built-in pnpm commands, so the deployment script is named `pnpm ship`.
 
-## 目錄
+## Directory Structure
 
 ```text
-site.yaml                 站點配置：語言、路由、翻譯引擎、主題、部署
-content/posts/<slug>/     page bundle：index.md(x) + 圖片等資源
-content/posts/<slug>/index.en-us.md   可選：人工撰寫的他語版本（優先於機翻）
-content/pages/<slug>/     獨立頁面（about 等）
-i18n/translations/<locale>/<collection>/<slug>.md   機翻產物（進 Git，可手改）
-i18n/state.lock.yaml      翻譯狀態（源文 hash、引擎、輸出 hash）；隨譯文一起提交
-i18n/glossary.yaml        術語表 + OpenCC 自定義詞
-i18n/ui/*.yaml            界面字串；zh-Hant 由 OpenCC 派生，可在 zh-Hant.yaml 覆寫
-i18n/taxonomy.yaml        tag / category 穩定 key → 各語顯示名
-public/_headers           Cloudflare Pages 響應頭（安全頭、靜態資源快取）
-.github/workflows/deploy.yml   翻譯 → 提交 → 測試 → 部署
-.uniblog/                 物化後的內容（gitignored，Astro 只讀這裡）
+site.yaml                 Site configuration: locales, routing, translation, theme, deployment
+content/posts/<slug>/     Post bundle: index.md(x) and co-located assets
+content/posts/<slug>/index.en-us.md   Optional hand-written translation (takes precedence over machine translation)
+content/pages/<slug>/     Standalone pages (e.g. about)
+i18n/translations/<locale>/<collection>/<slug>.md   Generated translations (tracked in Git; editable)
+i18n/state.lock.yaml      Translation state (source hash, provider, output hash); commit alongside translations
+i18n/glossary.yaml        Translation glossary and OpenCC custom terms
+i18n/ui/*.yaml            UI strings; zh-Hant is derived via OpenCC and can be overridden in zh-Hant.yaml
+i18n/taxonomy.yaml        Tag and category keys mapped to localized names
+public/_headers           Cloudflare Pages response headers (security headers, asset caching)
+.github/workflows/deploy.yml   CI workflow: translate → commit → test → deploy
+.uniblog/                 Generated per-locale content directory (gitignored; read by Astro)
 ```
 
-## 寫作
+## Writing
 
-Front matter（Hugo 式語義）：
+Front matter follows Hugo conventions:
 
 ```yaml
-title: 標題
+title: Post Title
 date: 2026-11-11T10:00:00Z
-lang: zh-Hans            # 源語言；省略時為 site.yaml 的 defaultLocale
-draft: true              # 草稿只在 pnpm dev 中顯示
-tags: [security]         # 穩定 key，顯示名見 i18n/taxonomy.yaml
+lang: zh-Hans            # Source language; defaults to defaultLocale in site.yaml
+draft: true              # Shown only during `pnpm dev`
+tags: [security]         # Tag keys; display names are defined in i18n/taxonomy.yaml
 categories: [notes]
-summary: 摘要
-slug: custom-url         # 可選，默認為目錄名
-translate: true          # false = 不翻譯；或列表 [en-US]
-glossary:                # 本篇額外術語
+summary: Post summary
+slug: custom-url         # Optional; defaults to the directory name
+translate: true          # false = disable translation; or an array of locales like [en-US]
+glossary:                # Per-post glossary terms
   - { zh-Hans: 金丝雀, en-US: canary }
-translatorNotes: 語氣輕鬆   # 給 LLM 的提示
-menu: 10                 # 僅 pages：出現在頂部導航，數字小者在前
+translatorNotes: Concise technical tone   # Instructions passed to LLM providers
+menu: 10                 # Pages only: include in top navigation (sorted ascending)
 ```
 
-Shortcode（remark-directive）：
+Shortcodes (implemented via `remark-directive`):
 
 ```md
-:::note[可選標題]          （note | tip | info | warning | danger | caution）
-內容
+:::note[Optional Title]     (note | tip | info | warning | danger | caution)
+Content
 :::
 
-:::details[摘要]
+:::details[Summary]
+Content
 :::
 
-::::tabs                    外層冒號要比內層多
+::::tabs                    Outer container requires more colons than inner blocks
 :::tab[pnpm]
 :::
 ::::
 
 :::steps
-### 第一步
+### Step 1
 :::
 
-::figure[圖說（會被翻譯）]{src="./cover.png"}
+::figure[Caption (translated with the post)]{src="./cover.png"}
 ::youtube{id="dQw4w9WgXcQ"}
 ```
 
-`.mdx` 也可用；翻譯時 JSX / import / 表達式會被佔位符保護。
+`.mdx` is supported. JSX elements, `import` statements, and expressions are replaced with placeholders during translation.
 
-### 繁簡轉換
+### Chinese Variant Conversion
 
-- 簡體源文 → 繁體由 OpenCC `s2twp` 生成；繁體源文（`lang: zh-Hant`）→ 簡體默認用 `tw2sp`（含詞彙，如 記憶體→内存），可在 `site.yaml` 改成只轉字形的 `tw2s`。
-- 以繁體為主時，`site.yaml` 改三處即可：
+- **Simplified source → Traditional**: Converted via OpenCC `s2twp`.
+- **Traditional source (`lang: zh-Hant`) → Simplified**: Converted via `tw2sp` by default (includes regional vocabulary such as `記憶體` → `内存`); can be changed to `tw2s` (character-only) in `site.yaml`.
+- **Using Traditional Chinese as the default locale**: Update three settings in `site.yaml`:
 
   ```yaml
   defaultLocale: zh-Hant
   locales:
-    zh-Hans: { path: zh-hans, label: 简体中文, derive: { from: zh-Hant, opencc: tw2sp } }  # 或 tw2s
+    zh-Hans: { path: zh-hans, label: 简体中文, derive: { from: zh-Hant, opencc: tw2sp } }  # or tw2s
     zh-Hant: { path: zh-hant, label: 繁體中文 }
   translate:
-    zhPivot: zh-Hant        # 日/英源文先機翻成繁體，再 OpenCC 派生簡體
+    zhPivot: zh-Hant        # Translate non-Chinese sources to zh-Hant first, then derive zh-Hans via OpenCC
   ```
 
-  界面字串同理：`i18n/ui/` 裡只要有一個中文變體的完整檔案，另一個就自動派生，自己的檔案只需寫覆寫項。
-- `-{zh-hans:内存;zh-hant:記憶體;}-` 按變體取值；`-{原樣}-` 不轉換。
-- 全局詞對寫在 `i18n/glossary.yaml` 的 `opencc:`。
-- 代碼、行內代碼、連結地址、HTML 標籤不轉換。
+  UI strings in `i18n/ui/` follow the same rule: only one complete Chinese variant file is required, while the other is derived automatically and only needs override entries.
+- **Inline syntax**: Use `-{zh-hans:内存;zh-hant:記憶體;}-` for variant-specific terms, or `-{text}-` to prevent conversion.
+- **Global terms**: Add custom pairs under `opencc:` in `i18n/glossary.yaml`.
+- Code blocks, inline code, URLs, and HTML tags are not converted.
 
-## 翻譯
+## Translation
 
-狀態優先序：源文 > 人工版本 > 已校對機翻 > 機翻 > 過期機翻 > 回退到源文（顯示橫幅、`noindex`、canonical 指向源文、不進 sitemap 與搜索）。
+Resolution order per locale:
+**Source > Hand-written file (`index.<locale>.md`) > Reviewed/edited translation > Machine translation > Outdated (`stale`) translation > Source fallback** (renders a notice banner, sets `noindex`, points `canonical` to the source URL, and excludes the page from sitemaps and search).
 
-- 非中文源文只翻譯到 `translate.zhPivot`（默認 zh-Hans），另一中文變體由 OpenCC 派生。
-- 改了源文 → `stale`；手改過譯文（或 `reviewed: true`）→ 不會被覆蓋，除非 `pnpm i18n --force`。
-- 刪除 / 改名文章後，`pnpm i18n` 會刪除舊 slug 的譯文和 lock 條目（`--dry-run` 只列出）；改名前手改過的譯文可從 Git 歷史找回。
-- `pnpm dev` 時，Astro dev toolbar 的 **Translations** 面板可查看並觸發本頁翻譯。
-- `i18n/state.lock.yaml` 記錄每篇譯文對應的源文版本，**一定要和譯文一起提交**；合併衝突時不要只保留一邊。
+- Non-Chinese posts are translated only into `translate.zhPivot` (default: `zh-Hans`); the other Chinese variant is derived via OpenCC.
+- Modifying the source post marks existing machine translations as `stale`. Hand-edited translations (or files with `reviewed: true` in front matter) are not overwritten unless `pnpm i18n --force` is used.
+- Running `pnpm i18n` removes translation files and lock entries for deleted or renamed posts (`--dry-run` lists files without deleting).
+- During `pnpm dev`, the **Translations** panel in the Astro dev toolbar shows translation status and can trigger translation for the current page.
+- `i18n/state.lock.yaml` records the source and output hashes for each translation. **Always commit `state.lock.yaml` together with `i18n/translations/`**; when resolving merge conflicts, keep entries from both sides.
 
-引擎（`site.yaml` 的 `translate.default`，可用 `overrides` 按語言覆寫，或 `pnpm i18n -p <id>` 臨時指定）：
+### Providers
 
-| id | 方式 | 憑證 |
+Configure the default provider in `site.yaml` (`translate.default`), override per locale with `translate.overrides`, or pass `-p <id>` to `pnpm i18n`:
+
+| ID | Method | Environment Variable |
 | --- | --- | --- |
-| `openai` | 任意 OpenAI-compatible endpoint（DeepSeek、OpenRouter、Ollama…），`options.baseURL` 指定地址 | `OPENAI_API_KEY` |
-| `gemini` | `@google/genai`，整篇 + 佔位符 | `GEMINI_API_KEY` |
-| `anthropic` | `@anthropic-ai/sdk`，默認 `claude-opus-5-5`，開啟 server-side refusal fallback | `ANTHROPIC_API_KEY` 或 `ant auth login` |
-| `deepl` | DeepL v2，逐行 + XML 標籤 | `DEEPL_API_KEY` |
-| `google` | Cloud Translation Basic v2，逐行 + HTML | `GOOGLE_TRANSLATE_API_KEY` |
-| `mock` | 離線偽翻譯（測試用） | — |
+| `openai` | Any OpenAI-compatible endpoint (DeepSeek, OpenRouter, OpenAI, Ollama, etc.); set endpoint via `options.baseURL` | `OPENAI_API_KEY` |
+| `gemini` | `@google/genai`, full-document translation with placeholders | `GEMINI_API_KEY` |
+| `anthropic` | `@anthropic-ai/sdk`, defaults to `claude-opus-5-5` with refusal fallback | `ANTHROPIC_API_KEY` |
+| `deepl` | DeepL API v2, line-by-line with XML tag protection | `DEEPL_API_KEY` |
+| `google` | Cloud Translation Basic v2, line-by-line with HTML protection | `GOOGLE_TRANSLATE_API_KEY` |
+| `mock` | Offline pseudo-translation (for testing) | — |
 
-例：
+Example:
 
 ```yaml
 translate:
   default: { provider: openai, model: deepseek-flash, options: { baseURL: https://api.deepseek.com } }
   overrides:
-    ja: { provider: anthropic }          # 日文單獨用 Claude
+    ja: { provider: anthropic }          # Use Claude for Japanese
 ```
 
-LLM 引擎使用術語表（只注入命中原文的條目）；DeepL / Google 只支持 `dnt: true` 的不翻譯詞。新引擎實現 `TranslationProvider` 並在 `cli/translate/providers/index.ts` 註冊即可。
+LLM providers inject matching glossary terms from `i18n/glossary.yaml`; `deepl` and `google` only apply `dnt: true` (do-not-translate) terms. Custom providers can be added by implementing `TranslationProvider` and registering them in `cli/translate/providers/index.ts`.
 
-## 主題
+## Theme
 
-四種風格（paper / slate / ink / terminal，默認 ink，見 `site.yaml` 的 `theme.style`）與明暗模式獨立切換並記憶；TOC rail、麵包屑、上/下篇、tags / categories / archive、每語 RSS、sitemap、hreflang；`/` 或 ⌘K 打開命令面板（Pagefind 全文搜索、最近訪問、切換語言/風格）；文章頁「雙語對照」按標題逐節並排。
+Four styles (`paper`, `slate`, `ink`, `terminal`, configured via `theme.style` in `site.yaml`) and light/dark mode can be toggled independently; preferences are stored in `localStorage`.
 
-頂部導航：文章、歸檔、標籤、分類，再加上 front matter 帶 `menu` 的獨立頁面。
+Includes a table of contents sidebar, breadcrumbs, previous/next links, tag/category/archive pages, per-locale RSS feeds, sitemap, and `hreflang` links. Press `/` or `⌘K` to open the command palette (Pagefind search, recent pages, language/style switcher). Translated posts include a side-by-side bilingual toggle aligned by section heading.
 
-## 部署
+Top navigation displays Posts, Archive, Tags, Categories, and any standalone page with a `menu` field in front matter.
 
-`.github/workflows/deploy.yml` 使用 GitHub Actions + `wrangler pages deploy`（Cloudflare Pages 的 Direct Upload）。配置步驟見[從模板開始 · 5](#5-部署到-cloudflare-pages)。
+## Deployment
 
-### 流程
+`.github/workflows/deploy.yml` uses GitHub Actions and `wrangler pages deploy` (Cloudflare Pages Direct Upload). See [Quick Start · Step 5](#5-deploy-to-cloudflare-pages) for setup instructions.
 
-| 觸發 | 翻譯 | 部署到 |
+### Workflow Behavior
+
+| Trigger | Translation | Target |
 | --- | --- | --- |
-| push 到 `main` | 有翻譯 key 時：`pnpm i18n` → 有新譯文就以 `github-actions[bot]` 提交並推回 | 生產環境 |
-| 同倉庫的 PR | 否 | 預覽：`https://<branch>.<project>.pages.dev` |
-| 來自 fork 的 PR | 否 | 不部署（拿不到 secrets），只建置與測試 |
-| 手動（Actions → deploy → Run workflow） | 同 push | 所選分支 |
+| Push to `main` | When API key is set: runs `pnpm i18n`, commits new translations as `github-actions[bot]`, and pushes | Production |
+| Pull request (same repo) | No | Preview (`https://<branch>.<project>.pages.dev`) |
+| Pull request (fork) | No | Build and test only (no access to secrets) |
+| Manual (`workflow_dispatch`) | Same as push | Selected branch |
 
-- 推回的提交帶 `[skip ci]`，且 `GITHUB_TOKEN` 的推送本身不會觸發新的 workflow，不會循環。
-- 翻譯失敗不阻斷部署，相應頁面暫時回退到源文，下次 push 重試。
-- 推回時若 `main` 已有新提交且與 lock 衝突，本次不推送（只給 warning），下次 push 會重新翻譯。
-- 倉庫變量（Settings → Secrets and variables → Actions → Variables）`UNIBLOG_CI_TRANSLATE=false` 可關閉 CI 翻譯，只在本地翻。
-- `pnpm build` / `pnpm ship` 偵測到 `CI` 或 `CF_PAGES` 時不做建置期翻譯（結果無處保存），需要時加 `--translate`。
+- Commits pushed by the bot include `[skip ci]` and use `GITHUB_TOKEN`, preventing recursive workflow runs.
+- Translation errors do not block deployment; untranslated pages fall back to the source post and are retried on the next push.
+- If `main` receives new commits during translation and conflicts on the lockfile, the push step is skipped with a warning and retried on the next run.
+- Set the repository variable `UNIBLOG_CI_TRANSLATE=false` (**Settings → Secrets and variables → Actions → Variables**) to disable CI translation.
+- `pnpm build` and `pnpm ship` skip build-time translation when `CI` or `CF_PAGES` is detected (pass `--translate` to override).
 
-### 自定義域名
+### Custom Domain
 
-Cloudflare 控制台 → Workers & Pages → 你的項目 → Custom domains → Set up a custom domain。綁定後把 `site.yaml` 的 `url` 改成這個域名並提交。
+In the Cloudflare dashboard, go to **Workers & Pages → `<project>` → Custom domains → Set up a custom domain**. After binding the domain, update `url` in `site.yaml` and commit.
 
-### 從本地部署
+### Local Deployment
 
 ```bash
-pnpm exec wrangler login     # 或在 .env 填 CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID
-pnpm ship                    # 生產
-pnpm ship --branch preview   # 預覽
+pnpm exec wrangler login     # Or set CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID in .env
+pnpm ship                    # Deploy to production
+pnpm ship --branch preview   # Deploy to preview
 ```
 
-本地 `pnpm ship` 與 CI 部署到同一個項目，可以混用。
+Local `pnpm ship` and CI deploy to the same Cloudflare Pages project.
 
-### 常見設置問題
+### Common Issues
 
-- **分支不叫 `main`**：同時改 `deploy.yml` 的 `on.push.branches` 和 `site.yaml` 的 `deploy.productionBranch`。後者只在首次創建項目時生效，之後要在 Cloudflare 項目設置裡改。
-- **`main` 開了分支保護 / ruleset**：機器人推不回譯文。把 GitHub Actions 加入 bypass 列表，或設 `UNIBLOG_CI_TRANSLATE=false` 改為本地翻譯。
-- **組織倉庫推送失敗（403）**：組織策略可能禁止 `GITHUB_TOKEN` 寫入；在組織 Settings → Actions → General → Workflow permissions 放開，或關閉 CI 翻譯。
-- **Token 報權限錯誤**：確認權限是 Account 級的 Cloudflare Pages · Edit，且 Account Resources 包含 `CLOUDFLARE_ACCOUNT_ID` 對應的帳號。
+- **Default branch is not `main`**: Update both `on.push.branches` in `.github/workflows/deploy.yml` and `deploy.productionBranch` in `site.yaml`. `deploy.productionBranch` only takes effect when creating the project; for existing projects, change it in the Cloudflare dashboard.
+- **Branch protection / rulesets on `main`**: Prevents `github-actions[bot]` from pushing translation commits. Add GitHub Actions to the bypass list, or set `UNIBLOG_CI_TRANSLATE=false` and translate locally.
+- **403 error when pushing in an organization repository**: Enable **Read and write permissions** under **Settings → Actions → General → Workflow permissions**, or disable CI translation.
+- **Cloudflare token permission error**: Verify the token has **Account · Cloudflare Pages · Edit** permission and **Account Resources** includes the account matching `CLOUDFLARE_ACCOUNT_ID`.
 
 <details>
-<summary>改用 Cloudflare Pages 的 Git 集成</summary>
+<summary>Using Cloudflare Pages Git integration instead</summary>
 
-在 Cloudflare 控制台連接倉庫：Build command `pnpm build`，Output directory `dist`，環境變量 `NODE_VERSION=22`。建置時不會翻譯（偵測到 `CF_PAGES`），譯文需在本地 `pnpm i18n` 後提交。
+Connect the repository in the Cloudflare dashboard with Build command `pnpm build`, Output directory `dist`, and environment variable `NODE_VERSION=22`. Build-time translation is disabled when `CF_PAGES` is set, so run `pnpm i18n` locally and commit translations before pushing.
 
-注意：Git 集成項目與 Direct Upload 項目不能互轉。選了 Git 集成就刪掉 `deploy.yml` 或不配置 `CLOUDFLARE_API_TOKEN`，也不要再對該項目用 `pnpm ship`。
+Note: Direct Upload projects and Git integration projects cannot be converted into each other. If using Git integration, remove `.github/workflows/deploy.yml` (or leave `CLOUDFLARE_API_TOKEN` unset) and do not use `pnpm ship`.
 
 </details>
 
-## 跟進模板更新
+## Updating from the Template
 
-用模板建立的倉庫與本倉庫沒有 fork 關係，不會自動同步。需要時手動合併：
+Repositories created from a GitHub template do not share commit history with the template repository. To merge upstream changes:
 
 ```bash
 git remote add upstream https://github.com/<template-owner>/uniblog.git
 git fetch upstream
-git merge upstream/main --allow-unrelated-histories   # 第一次需要這個參數
+git merge upstream/main --allow-unrelated-histories   # Required on the first merge only
 ```
 
-衝突通常集中在 `site.yaml`、`content/`、`i18n/`，保留你自己的版本即可。
+Conflicts typically occur in `site.yaml`, `content/`, and `i18n/`; keep your local changes for those files.
 
-## 疑難排解
+## Troubleshooting
 
-- **`! skip … translation file has no lock entry (hand-placed)`**：譯文檔案存在，但 lock 裡沒有它的記錄，所以不敢覆蓋。常見原因：譯文提交了但 `state.lock.yaml` 沒提交 / 合併時丟了條目；改了 `site.yaml` 裡的語言代碼（lock 按代碼記錄，檔案按路徑查找）；或者真的是手放的檔案。用 `pnpm i18n --force <slug>` 重新翻譯並寫入 lock。
-- **修改 remark/rehype 插件後輸出沒變**：Astro 的內容層會快取渲染結果，刪除 `node_modules/.astro` 再建置。
-- **頁面顯示「本文暫無 … 版本，以下為 … 原文」橫幅**：該語言還沒翻譯，運行 `pnpm i18n` 或在 GitHub Secrets 配置翻譯 key。
+- **`! skip … translation file has no lock entry (hand-placed)`**: A translation file exists under `i18n/translations/`, but has no corresponding entry in `i18n/state.lock.yaml`, so `pnpm i18n` skips it to avoid overwriting manual files. This happens when a translation file was committed without `state.lock.yaml`, lock entries were dropped during a merge, or a locale code in `site.yaml` was renamed. Run `pnpm i18n --force <slug>` to re-translate and update the lockfile.
+- **Changes to remark/rehype plugins do not take effect**: Delete the Astro content cache at `node_modules/.astro` and rebuild.
+- **Fallback banner ("This post is not yet available in…") appears on pages**: The locale has not been translated yet. Run `pnpm i18n` locally or configure a translation API key in GitHub Secrets.
 
-## 開發與檢查
+## Development & Checks
 
 ```bash
-pnpm test            # vitest：轉換、保護、物化、翻譯管線、lock
-pnpm test:e2e        # 臨時目錄 mock 翻譯 → 建置 → headless Chromium 驗證（需要本機 Chromium，或設 CHROMIUM=路徑）
-pnpm check           # astro check + 依賴授權白名單
+pnpm test            # Vitest unit tests: OpenCC, placeholder protection, content generation, translation, lockfile
+pnpm test:e2e        # End-to-end test in a temp directory: mock translation → build → headless Chromium (set CHROMIUM=/path/to/chromium to override)
+pnpm check           # astro check + dependency license allowlist check
 ```
