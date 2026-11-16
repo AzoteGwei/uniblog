@@ -18,6 +18,7 @@ export function geminiProvider(ref: ProviderRef): TranslationProvider {
           contents: user,
           config: { systemInstruction: system, temperature },
         });
+        if (res.candidates?.[0]?.finishReason === 'MAX_TOKENS') throw new Error('gemini hit max output tokens; split the post');
         const text = res.text;
         if (!text) throw new Error(`gemini returned no text (finish: ${res.candidates?.[0]?.finishReason ?? 'unknown'})`);
         return text;

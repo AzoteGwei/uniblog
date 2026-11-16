@@ -3,19 +3,33 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { planJobs, runJobs, translationTargets } from '../cli/translate';
 import { chunkBody, decode, encode } from '../cli/translate/llm';
-import { loadSiteConfig } from '../src/lib/config';
 import { splitFrontmatter } from '../src/lib/frontmatter';
 import { materialize } from '../src/lib/materialize';
 import { discoverSources } from '../src/lib/sources';
-import { makeSite } from './helpers';
+import { fixtureConfig, makeSite } from './helpers';
 
-const cfg = loadSiteConfig();
+const cfg = fixtureConfig;
 
 describe('llm envelope', () => {
   it('encodes and decodes fields and body', () => {
     const enc = encode({ title: 'T', summary: 'S' }, '# H\n\nbody ⟦0⟧\n');
     expect(decode(enc, ['title', 'summary'])).toEqual({ fields: { title: 'T', summary: 'S' }, body: '# H\n\nbody ⟦0⟧' });
     expect(() => decode('=====BODY=====\nx', ['title'])).toThrow(/missing fields/);
+  });
+  it.each([
+    ['full-width', '＝＝＝＝＝FIELD title＝＝＝＝＝\nT\n＝＝＝＝＝BODY＝＝＝＝＝\nB'],
+    ['spaces and case', '===== field title =====\nT\n===== Body =====\nB'],
+    ['bold and indent', ' **=====FIELD title=====**\nT\n**=====BODY=====**\nB'],
+    ['translated label', '=====FIELD title=====\nT\n=====本文=====\nB'],
+    ['code fence', '```markdown\n=====FIELD title=====\nT\n=====BODY=====\nB\n```'],
+    ['dropped BODY marker', '=====FIELD title=====\nT\n\nB'],
+  ])('tolerates mangled markers: %s', (_, out) => {
+    expect(decode(out, ['title'])).toEqual({ fields: { title: 'T' }, body: 'B' });
+  });
+  it('treats everything after BODY as body, and a marker-less continuation chunk as body', () => {
+    expect(decode('=====BODY=====\na\n=====x=====\nb', []).body).toBe('a\n=====x=====\nb');
+    expect(decode('just body\n', []).body).toBe('just body');
+    expect(() => decode('=====FIELD title=====\nT', ['title'])).toThrow(/missing the BODY.*output starts/);
   });
   it('chunks at h2 boundaries', () => {
     const body = '## a\n' + 'x'.repeat(60) + '\n## b\n' + 'y'.repeat(60) + '\n';

@@ -2,7 +2,7 @@
 import { termFor } from '../../src/lib/glossary';
 import type { TranslateJob, TranslateResult } from './types';
 
-export const PROMPT_VERSION = 1;
+export const PROMPT_VERSION = 2;
 const MAX_CHUNK = 9000;
 
 export type Complete = (system: string, user: string) => Promise<string>;
@@ -21,6 +21,7 @@ export function systemPrompt(job: TranslateJob): string {
     '',
     'Rules:',
     '- Output only the translation in the exact section format you receive. No commentary, no code fences around the output.',
+    '- Lines like =====FIELD title===== and =====BODY===== are structural markers: copy each one verbatim on its own line, in the same order. Never translate, reformat or omit them.',
     '- Placeholders like ⟦12⟧ stand for code, URLs, HTML tags or shortcode syntax. Copy every placeholder exactly once, unchanged, at the matching position.',
     '- Preserve Markdown structure: the same headings (same count and levels), lists, tables, emphasis, blank lines and line breaks between blocks.',
     '- Translate naturally and idiomatically for a technical audience; do not add or omit content.',
@@ -48,22 +49,47 @@ export function encode(fields: Record<string, string>, body: string): string {
   return [...parts, `${BODY}\n${body}`].join('\n');
 }
 
+/**
+ * Section marker as models actually emit it: exact `=====BODY=====`, but also full-width `＝`,
+ * extra spaces, other case, wrapped in `**`/`#`, or with the BODY label translated (`=====本文=====`).
+ * Group 1 = field name; group 2 = any other label, which is taken as BODY.
+ */
+const MARK = /^[ \t>*_#`]*[=＝]{3,}[ \t]*(?:FIELD[ \t]+([\w-]+)|(?!FIELD\b)([^\n=＝]*[^\s=＝][^\n=＝]*?))[ \t]*[=＝]{3,}[ \t*_`]*\r?$/gim;
+
 export function decode(out: string, expectFields: string[]): TranslateResult {
-  const text = out.replace(/^```[a-z]*\n([\s\S]*)\n```\s*$/i, '$1');
+  const text = out.replace(/^\s*```[a-z]*\n([\s\S]*)\n```\s*$/i, '$1');
   const fields: Record<string, string> = {};
-  const re = /^=====(FIELD ([\w-]+)|BODY)=====\s*$/gm;
-  const marks = [...text.matchAll(re)];
   let body: string | undefined;
+  const marks: RegExpMatchArray[] = [];
+  for (const m of text.matchAll(MARK)) {
+    marks.push(m);
+    if (m[1] === undefined) break; // BODY is last: anything below it, marker-like or not, is body
+  }
   marks.forEach((m, i) => {
-    const start = m.index + m[0].length + 1;
+    const start = m.index! + m[0].length + 1;
     const end = marks[i + 1]?.index ?? text.length;
     const value = text.slice(start, end).replace(/\n$/, '');
-    if (m[2]) fields[m[2]] = value.trim();
+    if (m[1] !== undefined) fields[m[1].toLowerCase()] = value.trim();
     else body = value;
   });
-  if (body === undefined) throw new Error('model output is missing the BODY section');
+  if (body === undefined) {
+    const last = marks.at(-1);
+    if (!marks.length && !expectFields.length) {
+      // Continuation chunk whose only marker was dropped: the whole reply is the body.
+      body = text.replace(/\n$/, '');
+    } else if (last?.[1] !== undefined) {
+      // BODY marker dropped after the last field: fields are single-line, the rest is body.
+      const key = last[1].toLowerCase();
+      const [first, ...rest] = fields[key]!.split('\n');
+      if (rest.length) {
+        fields[key] = first!.trim();
+        body = rest.join('\n').replace(/^\s*\n/, '');
+      }
+    }
+  }
+  if (body === undefined) throw new Error(`model output is missing the BODY section; output starts: ${JSON.stringify(out.slice(0, 200))}`);
   const missing = expectFields.filter((f) => !(f in fields));
-  if (missing.length) throw new Error(`model output is missing fields: ${missing.join(', ')}`);
+  if (missing.length) throw new Error(`model output is missing fields: ${missing.join(', ')}; output starts: ${JSON.stringify(out.slice(0, 200))}`);
   return { body, fields };
 }
 
